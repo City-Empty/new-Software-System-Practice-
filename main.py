@@ -496,8 +496,8 @@ def exam_result(result_id):
     # 确保查看的是自己的考试结果
     if result.user_id != current_user.id:
         abort(403)
-
-    return render_template('exam_result.html', result=result)
+    total_score = result.total_possible_score  # 获取总分
+    return render_template('exam_result.html', result=result ,exam=exam,total_score=total_score)
 
 
 # 学生学习进度
