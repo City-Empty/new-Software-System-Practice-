@@ -90,21 +90,24 @@ def register():
         username = request.form['username']
         password = request.form['password']
         role = request.form['role']
-        if User.query.filter_by(username=username).first():
+        if User.query.filter_by(username=username).first():# 在数据库中
             flash('用户名已存在')
             return redirect(url_for('register'))
         hashed_password = generate_password_hash(password)
+        # 创建了一个新的user对象
         new_user = User(username=username, password=hashed_password, role=role)
+        # 添加到数据库表单中
         db.session.add(new_user)
         db.session.commit()
         flash('注册成功，请登录')
+        # 注册成功后抛出提示信息并重定向到登录界面
         return redirect(url_for('login'))
     return render_template('register.html')
 
 
 # 登出
 @app.route('/logout')
-@login_required
+@login_required # 登录需要√
 def logout():
     logout_user()
     flash('已登出')
@@ -115,8 +118,10 @@ def logout():
 @app.route('/teacher/dashboard')
 @login_required
 def teacher_dashboard():
+    # 如果当前登录身份不是老师的话，抛出403权限异常
     if current_user.role != 'teacher':
         abort(403)
+    # 从 Course 表中查找当前登录的老师发布的所有课程并传给courses变量供teacher_dashboard.html使用
     courses = Course.query.filter_by(teacher_id=current_user.id).all()
     return render_template('teacher_dashboard.html', courses=courses)
 
@@ -130,6 +135,8 @@ def create_course():
     if request.method == 'POST':
         title = request.form['title']
         description = request.form['description']
+
+        # 获取标题和课程描述信息 并 创建一个新的Course对象
         new_course = Course(
             title=title,
             description=description,
@@ -139,6 +146,7 @@ def create_course():
         db.session.commit()
 
         # 处理视频上传
+        # 检查表单里有没有上传视频文件，如果有，拿到视频文件对象
         if 'video' in request.files:
             video_file = request.files['video']
             if video_file.filename != '':
