@@ -1,0 +1,34 @@
+<!-- templates/teacher_students_progress.html -->
+{% extends "base.html" %}
+{% block title %}{{ course.title }} - 学生进度{% endblock %}
+{% block content %}
+<h2>{{ course.title }} - 学生进度</h2>
+<table class="table-auto w-full">
+    <thead>
+        <tr>
+            <th class="px-4 py-2">学生姓名</th>
+            <th class="px-4 py-2">考试成绩</th>
+            <th class="px-4 py-2">学习进度</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for data in student_progress %}
+        <tr>
+            <td class="border px-4 py-2">{{ data.student.username }}</td>
+            <td class="border px-4 py-2">
+                {% for exam_result in data.exam_results %}
+                    {{ exam_result.exam.title }}: {{ exam_result.score }} 分<br>
+                {% endfor %}
+            </td>
+            <td class="border px-4 py-2">
+                {% if data.progress %}
+                    {{ data.progress.progress_percentage }}%
+                {% else %}
+                    暂无数据
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

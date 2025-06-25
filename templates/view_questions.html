@@ -1,0 +1,39 @@
+<!-- templates/view_questions.html -->
+{% extends "base.html" %}
+{% block title %}{{ exam.title }} - 试题列表{% endblock %}
+{% block content %}
+<h2>{{ exam.title }} - 试题列表</h2>
+<p>所属课程: {{ exam.course.title }}</p>
+<div class="card mb-6">
+    <div class="card-body">
+        <a href="{{ url_for('add_question', exam_id=exam.id) }}" class="btn">添加新试题</a>
+    </div>
+</div>
+{% if questions %}
+<div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
+    {% for question in questions %}
+    <div class="card">
+        <div class="card-body">
+            <h3 class="font-semibold">{{ loop.index }}. {{ question.question_text|truncate(50) }}</h3>
+            <p class="text-sm text-gray-500 mt-1">
+                分值: {{ question.score }} 分
+            </p>
+            <div class="mt-4 flex justify-between">
+                <a href="{{ url_for('add_question', exam_id=exam.id, question_id=question.id) }}" class="text-sm text-primary">
+                    编辑试题 <i class="fa fa-pencil ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center">
+        <i class="fa fa-file-text-o text-4xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500">暂无试题，点击添加新试题</p>
+        <a href="{{ url_for('add_question', exam_id=exam.id) }}" class="mt-3 inline-block btn">添加试题</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

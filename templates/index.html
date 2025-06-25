@@ -1,0 +1,36 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+{% block title %}EduHub - 在线教育平台{% endblock %}
+{% block content %}
+<h1>欢迎来到EduHub</h1>
+<p>探索高质量在线课程，提升你的技能水平</p>
+<div class="grid">
+    {% for course in courses %}
+    <div class="course-card">
+        <img src="https://picsum.photos/600/338?random={{ course.id }}" alt="{{ course.title }}" class="course-thumbnail">
+        <div class="course-info">
+            <h3 class="course-title">{{ course.title }}</h3>
+            <p class="course-desc">{{ course.description }}</p>
+            <div class="course-meta">
+                <span><i class="fa fa-user"></i> 授课教师: {{ course.teacher.username }}</span>
+                <span><i class="fa fa-clock-o"></i> 课程时长</span>
+            </div>
+            {% if current_user.role == 'student' %}
+            <a href="{{ url_for('enroll_course', course_id=course.id) }}" class="btn">选课学习</a>
+            {% else %}
+            <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn">查看详情</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body">
+            <p>暂无课程，请等待教师上传</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="text-center mt-8">
+    <a href="#" class="btn-outline">查看全部课程</a>
+</div>
+{% endblock %}

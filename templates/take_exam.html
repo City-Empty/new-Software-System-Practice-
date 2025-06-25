@@ -1,0 +1,45 @@
+<!-- templates/take_exam.html -->
+{% extends "base.html" %}
+{% block title %}参加考试 - {{ exam.title }}{% endblock %}
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">{{ exam.title }}</h1>
+        <p class="text-gray-600 mb-6">考试时长: {{ exam.duration }} 分钟</p>
+
+        <form method="POST" action="{{ url_for('take_exam', exam_id=exam.id) }}">
+            <div class="space-y-8 mb-8">
+                {% for question in questions %}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="font-semibold text-lg mb-4">
+                        {{ loop.index }}. {{ question.question_text }}
+                        <span class="text-gray-500 text-sm ml-2">({{ question.score }} 分)</span>
+                    </h3>
+
+                    <div class="space-y-2">
+                        <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
+                            <input type="radio" name="question_{{ question.id }}" value="A" class="form-radio h-4 w-4 text-blue-500">
+                            <span class="ml-2">A. {{ question.options['A'] }}</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
+                            <input type="radio" name="question_{{ question.id }}" value="B" class="form-radio h-4 w-4 text-blue-500">
+                            <span class="ml-2">B. {{ question.options['B'] }}</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
+                            <input type="radio" name="question_{{ question.id }}" value="C" class="form-radio h-4 w-4 text-blue-500">
+                            <span class="ml-2">C. {{ question.options['C'] }}</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
+                            <input type="radio" name="question_{{ question.id }}" value="D" class="form-radio h-4 w-4 text-blue-500">
+                            <span class="ml-2">D. {{ question.options['D'] }}</span>
+                        </label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-md transition duration-300">
+                提交考试
+            </button>
+        </form>
+    </div>
+{% endblock %}

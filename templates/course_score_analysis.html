@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ course.title }} - 成绩分析{% endblock %}
+{% block content %}
+<h2>{{ course.title }} - 成绩分析</h2>
+<p>该课程的平均成绩为: {{ average_score }}</p>
+<!-- 可以添加更多的分析结果展示 -->
+{% endblock %}

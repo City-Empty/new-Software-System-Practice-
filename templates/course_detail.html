@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ course.title }} - EduHub{% endblock %}
+{% block content %}
+<h2>{{ course.title }}</h2>
+<div class="card">
+    <div class="card-body">
+        <!-- 视频播放区域 -->
+        <div class="video-container">
+            {% if course.video_filename %}
+            <video width="100%" controls poster="https://picsum.photos/800/450?random={{ course.id }}">
+                <source src="{{ url_for('play_video', filename=course.video_filename) }}" type="video/mp4">
+                你的浏览器不支持视频播放，请升级浏览器或安装插件
+            </video>
+            {% else %}
+            <div class="p-6 text-center bg-gray-50 rounded-lg">
+                <i class="fa fa-film text-4xl text-gray-300 mb-4"></i>
+                <p class="text-gray-500">教师尚未上传课程视频</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold">课程介绍</h3>
+            <p class="mt-2 text-gray-700">{{ course.description }}</p>
+        </div>
+
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold">课程考试</h3>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for exam in course.exams %}
+                <div class="card p-4">
+                    <h4 class="font-medium">{{ exam.title }}</h4>
+                    <p class="text-sm text-gray-500 mt-1">考试时长: {{ exam.duration }}分钟</p>
+                    <a href="{{ url_for('student_exams') }}" class="mt-3 inline-block btn btn-sm">参加考试</a>
+                </div>
+                {% else %}
+                <div class="card p-4">
+                    <p class="text-gray-500">暂无考试</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

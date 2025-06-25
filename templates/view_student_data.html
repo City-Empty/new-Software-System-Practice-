@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ course.title }} - 学生数据{% endblock %}
+{% block content %}
+<h2>{{ course.title }} - 学生数据</h2>
+
+{% if results %}
+<table class="table-auto w-full">
+    <thead>
+        <tr>
+            <th class="px-4 py-2">学生姓名</th>
+            <th class="px-4 py-2">考试成绩</th>
+            <th class="px-4 py-2">学习进度</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in results %}
+        <tr>
+            <td class="border px-4 py-2">{{ result.student.username }}</td>
+            <td class="border px-4 py-2">
+                {% for exam_result in result.exam_results %}
+                    {{ exam_result.exam.title }}: {{ exam_result.score }} 分<br>
+                {% endfor %}
+            </td>
+            <td class="border px-4 py-2">
+                {% if result.learning_progress %}
+                    {{ result.learning_progress.progress }}%
+                {% else %}
+                    暂无数据
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="card">
+    <div class="card-body text-center">
+        <i class="fa fa-file-text-o text-4xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500">暂无学生数据</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
