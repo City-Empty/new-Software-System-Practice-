@@ -491,7 +491,7 @@ def exam_result(result_id):
     if result.user_id != current_user.id:
         abort(403)
 
-    return render_template('exam_result.html', result=result)
+    return render_template('exam_result.html', result=result,exam=exam)
 
 
 # 学生学习进度

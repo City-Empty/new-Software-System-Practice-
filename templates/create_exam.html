@@ -1,316 +1,108 @@
-<!-- templates/create_exam.html -->
 {% extends "base.html" %}
-{% block title %}创建考试 - {{ course.title }}{% endblock %}
+{% block title %}创建考试{% endblock %}
 {% block content %}
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6">创建考试 - {{ course.title }}</h1>
-
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('create_exam', course_id=course.id) }}">
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">考试信息</h2>
-                <div class="mb-4">
-                    <label for="title" class="block text-gray-700 font-medium mb-2">考试标题</label>
-                    <input type="text" id="title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div class="mb-4">
-                    <label for="duration" class="block text-gray-700 font-medium mb-2">考试时长 (分钟)</label>
-                    <input type="number" id="duration" name="duration" min="1" value="60" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-            </div>
-
-            <div id="questions-container" class="space-y-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">添加试题</h2>
-
-                {% for i in range(1, 4) %}
-                <div class="question-card bg-white rounded-lg shadow-md p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-medium">试题 {{ i }}</h3>
-                        <span class="text-gray-500 text-sm">分值: <input type="number" name="score_{{ i }}" min="1" value="1" class="w-16 px-2 py-1 border border-gray-300 rounded text-center"> 分</span>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">问题内容</label>
-                        <textarea name="question_{{ i }}" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">题型</label>
-                        <select name="question_type_{{ i }}" class="form-control" required onchange="showTypeFields(this, {{ i }})">
-                            <option value="single">单选题</option>
-                            <option value="multiple">多选题</option>
-                            <option value="blank">填空题</option>
-                            <option value="short">简答题</option>
-                            <option value="judge">判断题</option>
-                        </select>
-                    </div>
-
-                    <div class="choice-fields-{{ i }}">
-                        <div class="mb-2">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">A.</span>
-                                <input type="text" name="option_a_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">B.</span>
-                                <input type="text" name="option_b_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">C.</span>
-                                <input type="text" name="option_c_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                        <div class="mb-4">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">D.</span>
-                                <input type="text" name="option_d_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="single-answer-{{ i }} mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">正确答案</label>
-                        <div class="flex space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_{{ i }}" value="A" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">A</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_{{ i }}" value="B" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">B</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_{{ i }}" value="C" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">C</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_{{ i }}" value="D" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">D</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="multiple-answer-{{ i }} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">正确答案（可多选）</label>
-                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="A"> A</label>
-                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="B"> B</label>
-                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="C"> C</label>
-                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="D"> D</label>
-                    </div>
-
-                    <div class="blank-answer-{{ i }} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">标准答案（填空题）</label>
-                        <input type="text" name="blank_answer_{{ i }}" class="form-control">
-                    </div>
-                    <div class="short-answer-{{ i }} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">参考答案（简答题）</label>
-                        <textarea name="short_answer_{{ i }}" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="judge-answer-{{ i }} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">正确答案（判断题）</label>
-                        <label>
-                            <input type="radio" name="judge_answer_{{ i }}" value="A"> 正确
-                        </label>
-                        <label>
-                            <input type="radio" name="judge_answer_{{ i }}" value="B"> 错误
-                        </label>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">试题解析</label>
-                        <textarea name="explanation_{{ i }}" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">图片材料（可选）</label>
-                        <input type="file" name="image_{{ i }}" accept="image/*">
-                    </div>
-                    <button type="button" class="delete-question-btn text-red-500 hover:text-red-700">
-                        <i class="fas fa-trash-alt mr-1"></i> 删除此试题
-                    </button>
-                </div>
-                {% endfor %}
-
-                <input type="hidden" id="question_count" name="question_count" value="3">
-                <button type="button" id="add-question-btn" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                    <i class="fas fa-plus mr-1"></i> 添加更多试题
-                </button>
-            </div>
-
-            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-6 rounded-md transition duration-300">
-                <i class="fas fa-save mr-1"></i> 创建考试
-            </button>
-        </form>
+<div class="container mt-4">
+  <h3 class="mb-4">创建考试</h3>
+  <form method="post" id="examForm">
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <strong>考试基本信息</strong>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label">考试标题</label>
+          <input type="text" class="form-control" name="title" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">考试时长（分钟）</label>
+          <input type="number" class="form-control" name="duration" value="60" min="1" required>
+        </div>
+      </div>
     </div>
 
-    <script>
-        function showTypeFields(select, idx) {
-            var type = select.value;
-            document.querySelector('.choice-fields-' + idx).style.display = (type === 'single' || type === 'multiple') ? '' : 'none';
-            document.querySelector('.single-answer-' + idx).style.display = (type === 'single') ? '' : 'none';
-            document.querySelector('.multiple-answer-' + idx).style.display = (type === 'multiple') ? '' : 'none';
-            document.querySelector('.blank-answer-' + idx).style.display = (type === 'blank') ? '' : 'none';
-            document.querySelector('.short-answer-' + idx).style.display = (type === 'short') ? '' : 'none';
-            document.querySelector('.judge-answer-' + idx).style.display = (type === 'judge') ? '' : 'none';
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('questions-container');
-            const addBtn = document.getElementById('add-question-btn');
-            let count = 3;
+    <div class="card mb-4">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong>试题设置</strong>
+        <button type="button" class="btn btn-sm btn-success" onclick="addQuestion()">添加题目</button>
+      </div>
+      <div class="card-body" id="questionsArea">
+        <!-- 动态题目区域 -->
+      </div>
+    </div>
+    <input type="hidden" name="question_count" id="questionCount" value="0">
+    <div class="text-center my-4">
+      <button type="submit" class="btn btn-lg btn-primary px-5">创建考试</button>
+    </div>
+  </form>
+</div>
 
-            // 初始化题型显示
-            for (let i = 1; i <= count; i++) {
-                showTypeFields(document.querySelector(`[name="question_type_${i}"]`), i);
-                document.querySelector(`[name="question_type_${i}"]`).addEventListener('change', function() {
-                    showTypeFields(this, i);
-                });
-            }
-
-            addBtn.addEventListener('click', function() {
-                count++;
-                const newQuestion = document.createElement('div');
-                newQuestion.className = 'question-card bg-white rounded-lg shadow-md p-6';
-                newQuestion.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-medium">试题 ${count}</h3>
-                        <span class="text-gray-500 text-sm">分值: <input type="number" name="score_${count}" min="1" value="1" class="w-16 px-2 py-1 border border-gray-300 rounded text-center"> 分</span>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">问题内容</label>
-                        <textarea name="question_${count}" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">题型</label>
-                        <select name="question_type_${count}" class="form-control" required onchange="showTypeFields(this, ${count})">
-                            <option value="single">单选题</option>
-                            <option value="multiple">多选题</option>
-                            <option value="blank">填空题</option>
-                            <option value="short">简答题</option>
-                            <option value="judge">判断题</option>
-                        </select>
-                    </div>
-                    <div class="choice-fields-${count}">
-                        <div class="mb-2">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">A.</span>
-                                <input type="text" name="option_a_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">B.</span>
-                                <input type="text" name="option_b_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">C.</span>
-                                <input type="text" name="option_c_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                        <div class="mb-4">
-                            <label class="flex items-center text-gray-700 font-medium mb-1">
-                                <span class="inline-block w-6">D.</span>
-                                <input type="text" name="option_d_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </label>
-                        </div>
-                    </div>
-                    <div class="single-answer-${count} mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">正确答案</label>
-                        <div class="flex space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_${count}" value="A" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">A</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_${count}" value="B" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">B</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_${count}" value="C" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">C</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_${count}" value="D" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">D</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="multiple-answer-${count} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">正确答案（可多选）</label>
-                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="A"> A</label>
-                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="B"> B</label>
-                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="C"> C</label>
-                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="D"> D</label>
-                    </div>
-                    <div class="blank-answer-${count} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">标准答案（填空题）</label>
-                        <input type="text" name="blank_answer_${count}" class="form-control">
-                    </div>
-                    <div class="short-answer-${count} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">参考答案（简答题）</label>
-                        <textarea name="short_answer_${count}" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="judge-answer-${count} mb-4" style="display:none;">
-                        <label class="block text-gray-700 font-medium mb-2">正确答案（判断题）</label>
-                        <label>
-                            <input type="radio" name="judge_answer_${count}" value="A"> 正确
-                        </label>
-                        <label>
-                            <input type="radio" name="judge_answer_${count}" value="B"> 错误
-                        </label>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">试题解析</label>
-                        <textarea name="explanation_${count}" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">图片材料（可选）</label>
-                        <input type="file" name="image_${count}" accept="image/*">
-                    </div>
-                    <button type="button" class="delete-question-btn text-red-500 hover:text-red-700">
-                        <i class="fas fa-trash-alt mr-1"></i> 删除此试题
-                    </button>
-                `;
-                container.insertBefore(newQuestion, addBtn);
-                document.getElementById('question_count').value = count;
-
-                // 题型切换事件
-                newQuestion.querySelector(`[name="question_type_${count}"]`).addEventListener('change', function() {
-                    showTypeFields(this, count);
-                });
-                // 初始化显示
-                showTypeFields(newQuestion.querySelector(`[name="question_type_${count}"]`), count);
-
-                // 删除按钮事件
-                newQuestion.querySelector('.delete-question-btn').addEventListener('click', function() {
-                    container.removeChild(newQuestion);
-                    count--;
-                    document.getElementById('question_count').value = count;
-                    updateQuestionNumbers();
-                });
-            });
-
-            function updateQuestionNumbers() {
-                const questions = document.querySelectorAll('.question-card');
-                questions.forEach((question, index) => {
-                    const num = index + 1;
-                    question.querySelector('h3').textContent = `试题 ${num}`;
-                    // 更新所有表单元素的名称
-                    const elements = question.querySelectorAll('[name]');
-                    elements.forEach(el => {
-                        const name = el.name;
-                        const prefix = name.split('_')[0];
-                        el.name = `${prefix}_${num}`;
-                    });
-                    // 更新题型切换事件
-                    const typeSelect = question.querySelector(`[name="question_type_${num}"]`);
-                    if (typeSelect) {
-                        typeSelect.onchange = function() { showTypeFields(this, num); };
-                    }
-                });
-            }
-        });
-    </script>
+<script>
+let questionIndex = 0;
+function addQuestion() {
+  questionIndex++;
+  document.getElementById('questionCount').value = questionIndex;
+  const area = document.getElementById('questionsArea');
+  const qDiv = document.createElement('div');
+  qDiv.className = 'border rounded p-3 mb-3 position-relative';
+  qDiv.innerHTML = `
+    <button type="button" class="btn-close position-absolute top-0 end-0" aria-label="删除" onclick="this.parentNode.remove();updateCount()"></button>
+    <div class="mb-2"><strong>第${questionIndex}题</strong></div>
+    <div class="mb-2">
+      <label>题目内容</label>
+      <input type="text" class="form-control" name="question_${questionIndex}" required>
+    </div>
+    <div class="mb-2">
+     <label>题目图片（可选）</label>
+    <input type="file" class="form-control" name="image_${questionIndex}" accept="image/*">
+     </div>
+    <div class="mb-2">
+      <label>题型</label>
+      <select class="form-select" name="question_type_${questionIndex}" required>
+        <option value="single">单选题</option>
+        <option value="multiple">多选题</option>
+        <option value="truefalse">判断题</option>
+      </select>
+    </div>
+    <div class="row mb-2">
+      <div class="col">
+        <label>A</label>
+        <input type="text" class="form-control" name="option_a_${questionIndex}" required>
+      </div>
+      <div class="col">
+        <label>B</label>
+        <input type="text" class="form-control" name="option_b_${questionIndex}" required>
+      </div>
+      <div class="col">
+        <label>C</label>
+        <input type="text" class="form-control" name="option_c_${questionIndex}" required>
+      </div>
+      <div class="col">
+        <label>D</label>
+        <input type="text" class="form-control" name="option_d_${questionIndex}" required>
+      </div>
+    </div>
+    <div class="mb-2">
+      <label>正确答案</label>
+      <select class="form-select" name="correct_answer_${questionIndex}" required>
+        <option value="">请选择</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+    <div class="mb-2">
+      <label>分值</label>
+      <input type="number" class="form-control" name="score_${questionIndex}" value="1" min="1" required>
+    </div>
+  `;
+  area.appendChild(qDiv);
+}
+function updateCount() {
+  // 重新统计题目数
+  const area = document.getElementById('questionsArea');
+  const count = area.querySelectorAll('.border.rounded').length;
+  document.getElementById('questionCount').value = count;
+}
+</script>
 {% endblock %}
