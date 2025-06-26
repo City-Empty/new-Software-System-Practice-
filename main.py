@@ -453,6 +453,11 @@ def take_exam(exam_id):
     exam = Exam.query.get_or_404(exam_id)
     questions = Question.query.filter_by(exam_id=exam_id).all()
 
+    # 检查 options 是否为 None，若为 None 则赋予空字典
+    for question in questions:
+        if question.options is None:
+            question.options = {}
+
     if request.method == 'POST':
         total_score = 0
         total_possible_score = sum(q.score for q in questions)
