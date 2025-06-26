@@ -9,6 +9,8 @@ from db import db  # 从独立文件导入数据库实例
 from models import User, Course, Exam, Question, ExamResult, LearningProgress, ForumPost, ForumReply  # 导入模型类
 from flask_migrate import Migrate  # 用于数据库迁移
 from werkzeug.utils import send_from_directory
+from sqlalchemy import JSON
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'eduhub-secret-key'
@@ -302,28 +304,60 @@ def create_exam(course_id):
         question_count = int(request.form.get('question_count', 0))
         for i in range(1, question_count + 1):
             question_text = request.form.get(f'question_{i}')
-            option_a = request.form.get(f'option_a_{i}')
-            option_b = request.form.get(f'option_b_{i}')
-            option_c = request.form.get(f'option_c_{i}')
-            option_d = request.form.get(f'option_d_{i}')
-            correct_answer = request.form.get(f'correct_answer_{i}')
-            score = int(request.form.get(f'score_{i}', 1))  # 默认1分
+            question_type = request.form.get(f'question_type_{i}', 'single')
+            score = int(request.form.get(f'score_{i}', 1))
+            explanation = request.form.get(f'explanation_{i}', '')
+            image_path = None
 
-            if question_text and option_a and option_b and option_c and option_d and correct_answer:
-                # 构建选项JSON
+            # 处理图片上传
+            image_file = request.files.get(f'image_{i}')
+            if image_file and image_file.filename:
+                img_folder = os.path.join('uploads', 'question_images')
+                os.makedirs(img_folder, exist_ok=True)
+                filename = secure_filename(image_file.filename)
+                unique_filename = f"{os.urandom(8).hex()}_{filename}"
+                file_path = os.path.join(img_folder, unique_filename)
+                image_file.save(file_path)
+                image_path = file_path
+
+            options = None
+            correct_answer = ''
+            if question_type in ['single', 'multiple']:
+                option_a = request.form.get(f'option_a_{i}', '')
+                option_b = request.form.get(f'option_b_{i}', '')
+                option_c = request.form.get(f'option_c_{i}', '')
+                option_d = request.form.get(f'option_d_{i}', '')
                 options = {
                     'A': option_a,
                     'B': option_b,
                     'C': option_c,
                     'D': option_d
                 }
+                if question_type == 'single':
+                    correct_answer = request.form.get(f'correct_answer_{i}', '')
+                else:  # 多选
+                    # 注意：多选题答案用 getlist
+                    correct_multi = request.form.getlist(f'correct_answer_multi_{i}')
+                    correct_answer = ','.join(correct_multi)
+            elif question_type == 'blank':
+                correct_answer = request.form.get(f'blank_answer_{i}', '')
+            elif question_type == 'short':
+                correct_answer = request.form.get(f'short_answer_{i}', '')
+            elif question_type == 'judge':
+                options = {'A': '正确', 'B': '错误'}
+                correct_answer = request.form.get(f'judge_answer_{i}', '')
 
+            # 只有题干和答案都填写才添加
+            if question_text and correct_answer:
                 question = Question(
                     exam_id=new_exam.id,
                     question_text=question_text,
+                    question_type=question_type,
                     options=options,
                     correct_answer=correct_answer,
-                    score=score
+                    score=score,
+                    explanation=explanation,
+                    image=image_path
                 )
                 db.session.add(question)
 
@@ -362,44 +396,76 @@ def add_question(exam_id):
 
     if request.method == 'POST':
         question_text = request.form['question_text']
-        option_a = request.form['option_a']
-        option_b = request.form['option_b']
-        option_c = request.form['option_c']
-        option_d = request.form['option_d']
-        correct_answer = request.form['correct_answer']
+        question_type = request.form.get('question_type', 'single')
         score = int(request.form.get('score', 1))
         explanation = request.form.get('explanation', '')
+        image_path = None
 
-        options = {
-            'A': option_a,
-            'B': option_b,
-            'C': option_c,
-            'D': option_d
-        }
+        # 处理图片上传
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename:
+                img_folder = os.path.join('uploads', 'question_images')
+                os.makedirs(img_folder, exist_ok=True)
+                filename = secure_filename(image_file.filename)
+                unique_filename = f"{os.urandom(8).hex()}_{filename}"
+                file_path = os.path.join(img_folder, unique_filename)
+                image_file.save(file_path)
+                image_path = file_path
+
+        options = None
+        correct_answer = ''
+        if question_type in ['single', 'multiple']:
+            option_a = request.form.get('option_a', '')
+            option_b = request.form.get('option_b', '')
+            option_c = request.form.get('option_c', '')
+            option_d = request.form.get('option_d', '')
+            options = {
+                'A': option_a,
+                'B': option_b,
+                'C': option_c,
+                'D': option_d
+            }
+            if question_type == 'single':
+                correct_answer = request.form['correct_answer']
+            else:  # 多选
+                correct_answer = ','.join(request.form.getlist('correct_answer_multi'))
+        elif question_type == 'blank':
+            correct_answer = request.form.get('blank_answer', '')
+        elif question_type == 'short':
+            correct_answer = request.form.get('short_answer', '')
+        elif question_type == 'judge':
+            # 判断题只有“正确/错误”两个选项
+            options = {'A': '正确', 'B': '错误'}
+            correct_answer = request.form.get('judge_answer', '')
 
         if question:  # 编辑
             question.question_text = question_text
+            question.question_type = question_type
             question.options = options
             question.correct_answer = correct_answer
             question.score = score
             question.explanation = explanation
+            if image_path:
+                question.image = image_path
             db.session.commit()
             flash('试题编辑成功')
         else:  # 新增
             new_question = Question(
                 exam_id=exam_id,
                 question_text=question_text,
+                question_type=question_type,
                 options=options,
                 correct_answer=correct_answer,
                 score=score,
-                explanation=explanation
+                explanation=explanation,
+                image=image_path
             )
             db.session.add(new_question)
             db.session.commit()
             flash('试题添加成功')
         return redirect(url_for('view_questions', exam_id=exam_id))
 
-    # GET请求，渲染表单，若为编辑则传递question
     return render_template('add_question.html', exam=exam, question=question)
 
 
@@ -477,18 +543,45 @@ def take_exam(exam_id):
     if request.method == 'POST':
         total_score = 0
         total_possible_score = sum(q.score for q in questions)
+        student_answers = {}
 
         for question in questions:
-            user_answer = request.form.get(f'question_{question.id}')
-            if user_answer == question.correct_answer:
-                total_score += question.score
+            qid = str(question.id)
+            user_answer = None
+            # 处理不同题型
+            if question.question_type == 'single':
+                user_answer = request.form.get(f'question_{qid}', '')
+                if user_answer == question.correct_answer:
+                    total_score += question.score
+            elif question.question_type == 'multiple':
+                user_answer = request.form.getlist(f'question_{qid}')
+                # 标准答案与学生答案都转集合比较
+                correct_set = set(question.correct_answer.split(','))
+                user_set = set(user_answer)
+                if user_set == correct_set:
+                    total_score += question.score
+                user_answer = ','.join(user_answer)
+            elif question.question_type == 'blank':
+                user_answer = request.form.get(f'question_{qid}', '').strip()
+                if user_answer == question.correct_answer.strip():
+                    total_score += question.score
+            elif question.question_type == 'short':
+                user_answer = request.form.get(f'question_{qid}', '').strip()
+                # 简答题可人工批改，这里不自动计分
+            elif question.question_type == 'judge':
+                user_answer = request.form.get(f'question_{qid}', '')
+                if user_answer == question.correct_answer:
+                    total_score += question.score
 
-        # 保存考试结果
+            student_answers[qid] = user_answer
+
+        # 保存考试结果，answer_json 字段存储学生答案
         result = ExamResult(
             user_id=current_user.id,
             exam_id=exam_id,
             score=total_score,
-            total_possible_score=total_possible_score
+            total_possible_score=total_possible_score,
+            answer_json=json.dumps(student_answers)  # 新增
         )
         db.session.add(result)
         db.session.commit()
@@ -508,20 +601,27 @@ def exam_result(result_id):
 
     result = ExamResult.query.get_or_404(result_id)
     exam = result.exam
-    # 确保查看的是自己的考试结果
     if result.user_id != current_user.id:
         abort(403)
-    total_score = result.total_possible_score  # 获取总分
+    total_score = result.total_possible_score
 
-    # 获取所有试题
     questions = Question.query.filter_by(exam_id=exam.id).all()
     # 获取学生作答
-    # 假设ExamResult表有字段存储学生答案（如answer_json），否则这里无法显示学生作答
-    # 这里假设没有存储学生答案，暂时无法显示学生作答，仅显示正确答案和解析
-    # 如需支持学生作答回显，请在ExamResult中增加answer_json字段并在提交考试时保存
+    student_answers = {}
+    if hasattr(result, 'answer_json') and result.answer_json:
+        try:
+            student_answers = json.loads(result.answer_json)
+        except Exception:
+            student_answers = {}
 
-    return render_template('exam_result.html', result=result, exam=exam, total_score=total_score, questions=questions)
-
+    return render_template(
+        'exam_result.html',
+        result=result,
+        exam=exam,
+        total_score=total_score,
+        questions=questions,
+        student_answers=student_answers
+    )
 
 # 学生学习进度
 @app.route('/student/progress')

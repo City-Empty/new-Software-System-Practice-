@@ -50,10 +50,12 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
-    options = db.Column(db.JSON, nullable=False)  # 存储选项的JSON字段
-    correct_answer = db.Column(db.String(10), nullable=False)  # 正确答案
-    score = db.Column(db.Integer, default=1)  # 试题分值
-    explanation = db.Column(db.Text)  # 新增：试题解析
+    options = db.Column(db.JSON, nullable=True)  # 选择题/判断题有选项
+    correct_answer = db.Column(db.Text, nullable=False)  # 支持多选/填空/简答/判断
+    score = db.Column(db.Integer, default=1)
+    explanation = db.Column(db.Text)
+    question_type = db.Column(db.String(20), default='single')  # 题型: single/multiple/blank/short/judge
+    image = db.Column(db.String(200))  # 图片材料路径
 
 
 class ExamResult(db.Model):
@@ -63,6 +65,7 @@ class ExamResult(db.Model):
     score = db.Column(db.Float, nullable=False)
     total_possible_score = db.Column(db.Float, nullable=False)
     submission_time = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    answer_json = db.Column(db.Text)  # 新增：存储学生作答
 
     # 关系
     user = db.relationship('User', backref='user_exam_result', lazy=True, overlaps="exam_results,user_exam_result")

@@ -3,40 +3,57 @@
 {% block title %}考试结果 - {{ exam.title }}{% endblock %}
 
 {% block content %}
-<h2>{{ exam.title }} - 考试结果</h2>
-<p>得分：{{ result.score }} / {{ total_score }}</p>
-<hr>
-{% if questions %}
-    <h3>试题详情</h3>
-    <ol>
-    {% for question in questions %}
-        <li style="margin-bottom: 1.5em;">
-            <div>
-                <strong>{{ loop.index }}. {{ question.question_text }}</strong>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">{{ exam.title }} - 考试结果</h1>
+    <div class="mb-4">
+        <span class="font-semibold">得分：</span>
+        <span class="text-green-600 text-xl">{{ result.score }} / {{ total_score }}</span>
+    </div>
+    <div class="space-y-8">
+        {% for question in questions %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="font-semibold text-lg mb-2">
+                {{ loop.index }}. {{ question.question_text }}
+                <span class="text-gray-500 text-sm ml-2">({{ question.score }}分)</span>
+            </h3>
+            {% if question.image %}
+                <div class="mb-2">
+                    <img src="{{ url_for('static', filename=question.image.replace('uploads/', '')) }}" alt="题目图片" style="max-width:300px;">
+                </div>
+            {% endif %}
+            <div class="mb-2">
+                <span class="font-semibold">你的作答：</span>
+                <span>
+                    {% set ans = student_answers.get(question.id|string, '') %}
+                    {% if question.question_type == 'multiple' %}
+                        {{ ans|replace(',', ', ') }}
+                    {% elif question.question_type == 'judge' %}
+                        {% if ans == 'A' %} 正确 {% elif ans == 'B' %} 错误 {% else %} {{ ans }} {% endif %}
+                    {% else %}
+                        {{ ans }}
+                    {% endif %}
+                </span>
             </div>
-            <ul>
-                {% for key, value in question.options.items() %}
-                    <li>
-                        {{ key }}. {{ value }}
-                        {% if key == question.correct_answer %}
-                            <span style="color: green;">（正确答案）</span>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-            <!-- 如有学生作答信息，可在此显示 -->
-            {#
-            <div>
-                你的答案：{{ student_answer_map[question.id] if student_answer_map else '未作答' }}
+            <div class="mb-2">
+                <span class="font-semibold">正确答案：</span>
+                <span>
+                    {% if question.question_type == 'multiple' %}
+                        {{ question.correct_answer|replace(',', ', ') }}
+                    {% elif question.question_type == 'judge' %}
+                        {% if question.correct_answer == 'A' %} 正确 {% elif question.correct_answer == 'B' %} 错误 {% else %} {{ question.correct_answer }} {% endif %}
+                    {% else %}
+                        {{ question.correct_answer }}
+                    {% endif %}
+                </span>
             </div>
-            #}
             {% if question.explanation %}
-            <div style="color: #888; margin-top: 0.5em;">
-                <strong>试题解析：</strong>{{ question.explanation }}
+            <div class="mb-2">
+                <span class="font-semibold">试题解析：</span>
+                <span>{{ question.explanation }}</span>
             </div>
             {% endif %}
-        </li>
-    {% endfor %}
-    </ol>
-{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
