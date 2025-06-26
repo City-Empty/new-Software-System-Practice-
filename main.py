@@ -514,10 +514,31 @@ def take_exam(exam_id):
         # 记录学生答案
         student_answers = {}
         for question in questions:
-            user_answer = request.form.get(f'question_{question.id}')
+            if question.question_type == 'multiple':
+                # 多选题答案为逗号分隔字符串
+                user_answer = request.form.get(f'question_{question.id}', '')
+                # 统一格式：去除多余逗号和空格
+                user_answer = ','.join(sorted([ans for ans in user_answer.split(',') if ans]))
+            else:
+                user_answer = request.form.get(f'question_{question.id}')
             student_answers[str(question.id)] = user_answer
-            if user_answer == question.correct_answer:
-                total_score += question.score
+            # 判分
+            if question.question_type == 'multiple':
+                # 多选题：答案完全一致才得分
+                if user_answer == question.correct_answer:
+                    total_score += question.score
+            elif question.question_type == 'judge':
+                if user_answer == question.correct_answer:
+                    total_score += question.score
+            elif question.question_type == 'blank':
+                if user_answer == question.correct_answer:
+                    total_score += question.score
+            elif question.question_type == 'short':
+                # 简答题不自动判分
+                pass
+            else:
+                if user_answer == question.correct_answer:
+                    total_score += question.score
 
         # 保存考试结果，包含学生答案
         result = ExamResult(
@@ -531,7 +552,6 @@ def take_exam(exam_id):
         db.session.commit()
 
         flash('考试已提交，感谢参与！')
-        # 修正：使用 exam_result 作为 endpoint
         return redirect(url_for('exam_result', result_id=result.id))
 
     return render_template('take_exam.html', exam=exam, questions=questions)

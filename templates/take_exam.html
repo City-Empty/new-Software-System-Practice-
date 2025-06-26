@@ -11,16 +11,53 @@
           <span class="badge bg-secondary float-end">分值：{{ question.score }}</span>
         </div>
         <div class="card-body">
-          {% for key, value in question.options.items() %}
+          {% if question.question_type == 'single' %}
+            {% for key, value in question.options.items() %}
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio"
+                       name="question_{{ question.id }}" id="q{{ question.id }}_{{ key }}"
+                       value="{{ key }}" required>
+                <label class="form-check-label" for="q{{ question.id }}_{{ key }}">
+                  {{ key }}. {{ value }}
+                </label>
+              </div>
+            {% endfor %}
+          {% elif question.question_type == 'multiple' %}
+            {% for key, value in question.options.items() %}
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox"
+                       name="question_{{ question.id }}" id="q{{ question.id }}_{{ key }}"
+                       value="{{ key }}">
+                <label class="form-check-label" for="q{{ question.id }}_{{ key }}">
+                  {{ key }}. {{ value }}
+                </label>
+              </div>
+            {% endfor %}
+            <input type="hidden" name="question_{{ question.id }}_is_multiple" value="1">
+          {% elif question.question_type == 'judge' %}
             <div class="form-check mb-2">
               <input class="form-check-input" type="radio"
-                     name="question_{{ question.id }}" id="q{{ question.id }}_{{ key }}"
-                     value="{{ key }}" required>
-              <label class="form-check-label" for="q{{ question.id }}_{{ key }}">
-                {{ key }}. {{ value }}
+                     name="question_{{ question.id }}" id="q{{ question.id }}_true"
+                     value="True" required>
+              <label class="form-check-label" for="q{{ question.id }}_true">
+                正确
               </label>
             </div>
-          {% endfor %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio"
+                     name="question_{{ question.id }}" id="q{{ question.id }}_false"
+                     value="False" required>
+              <label class="form-check-label" for="q{{ question.id }}_false">
+                错误
+              </label>
+            </div>
+          {% elif question.question_type == 'blank' %}
+            <input type="text" class="form-control" name="question_{{ question.id }}" required>
+          {% elif question.question_type == 'short' %}
+            <textarea class="form-control" name="question_{{ question.id }}" rows="3" required></textarea>
+          {% else %}
+            <input type="text" class="form-control" name="question_{{ question.id }}" required>
+          {% endif %}
         </div>
       </div>
     {% endfor %}
@@ -29,4 +66,23 @@
     </div>
   </form>
 </div>
+<script>
+
+  // 多选题答案合并
+  document.querySelector('form').addEventListener('submit', function(e) {
+    {% for question in questions %}
+      {% if question.question_type == 'multiple' %}
+        var checkboxes = document.querySelectorAll('input[name="question_{{ question.id }}"]:checked');
+        var values = Array.from(checkboxes).map(cb => cb.value).join(',');
+        var hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'question_{{ question.id }}';
+        hidden.value = values;
+        this.appendChild(hidden);
+        // 取消原checkbox的name，避免重复
+        checkboxes.forEach(cb => cb.removeAttribute('name'));
+      {% endif %}
+    {% endfor %}
+  });
+</script>
 {% endblock %}
