@@ -244,21 +244,20 @@
                 EduHub
             </div>
             <div class="nav-links">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>首页</a>
-                    <!-- 添加论坛按钮 -->
-                    <a href="{{ url_for('course_forum') }}" {% if request.endpoint == 'course_forum' %}class="active"{% endif %}>论坛</a>
-                    {% if current_user.role == 'teacher' %}
-                        <a href="{{ url_for('teacher_dashboard') }}" {% if request.endpoint.startswith('teacher_') %}class="active"{% endif %}>教师中心</a>
-                    {% else %}
-                        <a href="{{ url_for('student_courses') }}" {% if request.endpoint.startswith('student_') %}class="active"{% endif %}>我的课程</a>
-                    {% endif %}
-                    <a href="{{ url_for('logout') }}">退出</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}class="active"{% endif %}>登录</a>
-                    <a href="{{ url_for('register') }}" {% if request.endpoint == 'register' %}class="active"{% endif %}>注册</a>
-                {% endif %}
-            </div>
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>首页</a>
+        <a href="{{ url_for('course_forum') }}" {% if request.endpoint == 'course_forum' %}class="active"{% endif %}>论坛</a>
+        {% if current_user.role == 'teacher' %}
+            <a href="{{ url_for('teacher_dashboard') }}" {% if request.endpoint.startswith('teacher_') %}class="active"{% endif %}>教师中心</a>
+        {% else %}
+            <a href="{{ url_for('student_courses') }}" {% if request.endpoint.startswith('student_') %}class="active"{% endif %}>我的课程</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">退出</a>
+    {% else %}
+        <a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}class="active"{% endif %}>登录</a>
+        <a href="{{ url_for('register') }}" {% if request.endpoint == 'register' %}class="active"{% endif %}>注册</a>
+    {% endif %}
+</div>
        </div>
 
       <!--{% with messages = get_flashed_messages(with_categories=true) %}

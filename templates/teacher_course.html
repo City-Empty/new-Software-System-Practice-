@@ -1,53 +1,43 @@
 {% extends "base.html" %}
 {% block title %}{% if course %}{{ course.title }} - 编辑{% else %}创建新课程{% endif %}{% endblock %}
 {% block content %}
-<h2>{% if course %}{{ course.title }} - 编辑课程{% else %}创建新课程{% endif %}</h2>
-<form method="POST" action="{% if course %}{{ url_for('edit_course', course_id=course.id) }}{% else %}{{ url_for('create_course') }}{% endif %}" enctype="multipart/form-data">
-    <div class="form-group">
-        <label for="title">课程标题</label>
-        <input type="text" id="title" name="title" class="form-control" value="{% if course %}{{ course.title }}{% endif %}" required>
-    </div>
-    <div class="form-group">
-        <label for="description">课程描述</label>
-        <textarea id="description" name="description" class="form-control" rows="5">{% if course %}{{ course.description }}{% endif %}</textarea>
-    </div>
-
-    <!-- 视频上传区域 -->
-    <div class="form-group mt-6">
-        <h3 class="text-lg font-semibold mb-3">课程视频</h3>
-        <div class="card p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors">
-            <div class="text-center">
-                <i class="fa fa-video-camera text-4xl text-gray-400 mb-4"></i>
-                <p class="text-gray-500 mb-2">点击或拖拽视频文件到此处上传</p>
-                <p class="text-xs text-gray-400">支持 MP4, WebM, OGG 格式，最大 1GB</p>
-                <input type="file" id="video" name="video" accept="video/*" class="hidden">
-                <button type="button" onclick="document.getElementById('video').click()" class="btn mt-4">选择视频文件</button>
-            </div>
+<div class="course-form-card" style="max-width:480px;margin:40px auto;padding:32px 28px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <h2 style="text-align:center;font-weight:600;margin-bottom:24px;">
+        {% if course %}编辑课程{% else %}创建新课程{% endif %}
+    </h2>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group" style="margin-bottom:18px;">
+            <label for="title" style="font-weight:500;">课程标题</label>
+            <input type="text" id="title" name="title" class="form-control" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid #ccc;margin-top:6px;" value="{% if course %}{{ course.title }}{% endif %}" required>
+        </div>
+        <div class="form-group" style="margin-bottom:18px;">
+            <label for="description" style="font-weight:500;">课程描述</label>
+            <textarea id="description" name="description" class="form-control" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid #ccc;margin-top:6px;" rows="4">{% if course %}{{ course.description }}{% endif %}</textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:22px;">
+            <label for="file" style="font-weight:500;">上传课程视频或学习材料</label><br>
+            <input type="file" id="file" name="video" style="display:none;" required onchange="document.getElementById('file-name').textContent = this.files[0]?.name || '未选择文件';">
+            <label for="file" class="btn" style="display:inline-block;padding:8px 22px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-top:8px;">选择文件</label>
+            <span id="file-name" class="file-name" style="margin-left:12px;color:#555;">未选择文件</span>
+            <p style="font-size:12px;color:#888;margin-top:6px;">支持视频（MP4, WebM, OGG）或文档（PDF, DOCX, PPTX等），最大1GB</p>
             {% if course and course.video_filename %}
-            <div class="mt-4">
-                <p class="text-sm text-gray-600">当前视频: {{ course.video_filename }}</p>
-                <div class="mt-2">
-                    <video width="100%" height="200" controls poster="https://picsum.photos/400/225?random={{ course.id }}">
-                        <source src="{{ url_for('play_video', filename=course.video_filename) }}" type="video/mp4">
-                        你的浏览器不支持视频播放
-                    </video>
-                </div>
+            <div style="margin-top:8px;">
+                <span style="font-size:13px;color:#2563eb;">已上传：{{ course.video_filename }}</span>
+            </div>
             {% endif %}
         </div>
+        <div class="form-group" style="text-align:center;">
+            <button type="submit" class="btn" style="padding:10px 32px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:16px;font-weight:500;box-shadow:0 2px 8px rgba(37,99,235,0.08);">
+                {% if course %}更新课程{% else %}创建课程{% endif %}
+            </button>
+        </div>
+    </form>
+    {% if course %}
+    <div style="margin-top:18px;text-align:center;">
+        <a href="{{ url_for('view_student_data', course_id=course.id) }}" style="font-size:13px;color:#666;text-decoration:underline;">
+            <i class="fa fa-users" style="margin-right:4px;"></i>查看学生数据
+        </a>
     </div>
-
-    <div class="form-group text-center">
-        <button type="submit" class="btn">{% if course %}更新课程{% else %}创建课程{% endif %}</button>
-    </div>
-</form>
-
-<!-- 添加查看学生数据链接 -->
-{% if course %}
-<div class="mt-3 flex justify-between items-center">
-    <a href="{{ url_for('view_student_data', course_id=course.id) }}" class="text-sm text-gray-600 hover:text-primary">
-        <i class="fa fa-users mr-1"></i> 查看学生数据
-    </a>
+    {% endif %}
 </div>
-{% endif %}
-
 {% endblock %}
