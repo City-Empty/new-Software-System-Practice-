@@ -1,0 +1,40 @@
+/* static/styles.css */
+.btn {
+    background-color: #4F8EF7;
+    color: #fff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn:hover {
+    background-color: #357ae8;
+}
+
+/* 表单容器样式 */
+.form-container {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 32px 24px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+/* 表单组间距 */
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* 输入框样式 */
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
