@@ -387,18 +387,28 @@ def edit_question(exam_id, question_id):
         abort(400)
     if request.method == 'POST':
         question.question_text = request.form['question_text']
-        question.option_a = request.form.get('option_a')
-        question.option_b = request.form.get('option_b')
-        question.option_c = request.form.get('option_c')
-        question.option_d = request.form.get('option_d')
-        # 更新选项
-        question.options = {
-            'A': question.option_a,
-            'B': question.option_b,
-            'C': question.option_c,
-            'D': question.option_d
-        }
-        question.correct_answer = request.form.get('correct_answer')
+        question.question_type = request.form.get('question_type', 'single')
+        if question.question_type in ['single', 'multiple']:
+            # 选择题
+            question.options = {
+                'A': request.form.get('option_a', ''),
+                'B': request.form.get('option_b', ''),
+                'C': request.form.get('option_c', ''),
+                'D': request.form.get('option_d', '')
+            }
+            question.correct_answer = request.form.get('correct_answer')
+        elif question.question_type == 'judge':
+            # 判断题
+            question.options = None
+            question.correct_answer = request.form.get('correct_answer')
+        elif question.question_type == 'blank':
+            # 填空题
+            question.options = None
+            question.correct_answer = request.form.get('correct_answer')
+        elif question.question_type == 'short':
+            # 简答题
+            question.options = None
+            question.correct_answer = request.form.get('correct_answer')
         question.score = int(request.form.get('score', 1))
         question.explanation = request.form.get('explanation')
         db.session.commit()
