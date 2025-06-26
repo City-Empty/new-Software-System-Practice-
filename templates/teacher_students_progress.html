@@ -21,11 +21,13 @@
                 {% endfor %}
             </td>
             <td class="border px-4 py-2">
-                {% if data.progress %}
-                    {{ data.progress.progress_percentage }}%
-                {% else %}
-                    暂无数据
-                {% endif %}
+                <a href="{{ url_for('teacher_view_student_progress', student_id=data.student.id, course_id=course.id) }}">
+                    {% if data.progress %}
+                        {{ data.progress.progress_percentage }}%
+                    {% else %}
+                        查看进度
+                    {% endif %}
+                </a>
             </td>
         </tr>
         {% endfor %}
