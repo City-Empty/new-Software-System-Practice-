@@ -381,7 +381,7 @@ def add_question(exam_id):
 
 
 
-# 查看学生数据
+# 查看学生数��
 @app.route('/teacher/course/<int:course_id>/view_student_data')
 @login_required
 def view_student_data(course_id):
@@ -563,6 +563,22 @@ def teacher_students_progress(course_id):
             'exam_results': exam_results
         })
     return render_template('teacher_students_progress.html', course=course, student_progress=student_progress)
+
+@app.route('/teacher/student/<int:student_id>/progress')
+@login_required
+def teacher_view_student_progress(student_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    course_id = request.args.get('course_id', type=int)
+    student = User.query.get_or_404(student_id)
+    if not course_id:
+        abort(400)
+    course = Course.query.get_or_404(course_id)
+    # 检查该学生是否属于该课程
+    if student not in course.students:
+        abort(403)
+    progress = LearningProgress.query.filter_by(user_id=student_id, course_id=course_id).first()
+    return render_template('student_learning_progress.html', student=student, course=course, progress=progress)
 
 
 

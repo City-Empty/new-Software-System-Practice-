@@ -27,8 +27,18 @@
             <div class="mt-4">
                 <p class="text-sm text-gray-600">当前视频: {{ course.video_filename }}</p>
                 <div class="mt-2">
+                    {% set ext = course.video_filename.split('.')[-1].lower() %}
+                    {% if ext == 'mp4' %}
+                        {% set mime = 'video/mp4' %}
+                    {% elif ext == 'webm' %}
+                        {% set mime = 'video/webm' %}
+                    {% elif ext == 'ogg' %}
+                        {% set mime = 'video/ogg' %}
+                    {% else %}
+                        {% set mime = 'video/mp4' %}
+                    {% endif %}
                     <video width="100%" height="200" controls poster="https://picsum.photos/400/225?random={{ course.id }}">
-                        <source src="{{ url_for('play_video', filename=course.video_filename) }}" type="video/mp4">
+                        <source src="{{ url_for('play_video', filename=course.video_filename) }}" type="{{ mime }}">
                         你的浏览器不支持视频播放
                     </video>
                 </div>
