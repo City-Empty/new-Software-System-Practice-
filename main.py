@@ -9,6 +9,8 @@ from db import db  # 从独立文件导入数据库实例
 from models import User, Course, Exam, Question, ExamResult, LearningProgress, ForumPost, ForumReply  # 导入模型类
 from flask_migrate import Migrate  # 用于数据库迁移
 from werkzeug.utils import send_from_directory
+from sqlalchemy import JSON
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'eduhub-secret-key'
@@ -419,7 +421,7 @@ def course_forum():
         flash('帖子发布成功')
         return redirect(url_for('course_forum'))
 
-    forum_posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
+    forum_posts = ForumPost.query.all()
     return render_template('course_forum.html', forum_posts=forum_posts)
 
 @app.route('/forum/reply/<int:post_id>', methods=['POST'])
@@ -489,7 +491,7 @@ def exam_result(result_id):
     if result.user_id != current_user.id:
         abort(403)
 
-    return render_template('exam_result.html', result=result,exam=exam,total_score=result.total_possible_score)
+    return render_template('exam_result.html', result=result)
 
 
 # 学生学习进度
@@ -579,6 +581,20 @@ def teacher_view_student_progress(student_id):
         abort(403)
     progress = LearningProgress.query.filter_by(user_id=student_id, course_id=course_id).first()
     return render_template('student_learning_progress.html', student=student, course=course, progress=progress)
+
+
+# 教师查看所有考试
+@app.route('/teacher/all_exams')
+@login_required
+def teacher_all_exams():
+    if current_user.role != 'teacher':
+        abort(403)
+    # 获取当前教师所有课程的所有考试
+    courses = Course.query.filter_by(teacher_id=current_user.id).all()
+    exams = []
+    for course in courses:
+        exams.extend(course.exams)
+    return render_template('teacher_all_exams.html', exams=exams)
 
 
 

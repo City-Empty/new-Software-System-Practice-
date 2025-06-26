@@ -5,7 +5,7 @@
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold mb-6">创建考试 - {{ course.title }}</h1>
 
-        <form method="POST" action="{{ url_for('create_exam', course_id=course.id) }}">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('create_exam', course_id=course.id) }}">
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4">考试信息</h2>
                 <div class="mb-4">
@@ -21,7 +21,6 @@
             <div id="questions-container" class="space-y-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4">添加试题</h2>
 
-                <!-- 默认添加3道试题 -->
                 {% for i in range(1, 4) %}
                 <div class="question-card bg-white rounded-lg shadow-md p-6">
                     <div class="flex justify-between items-center mb-4">
@@ -34,36 +33,49 @@
                         <textarea name="question_{{ i }}" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
                     </div>
 
-                    <div class="mb-2">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">A.</span>
-                            <input type="text" name="option_a_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
-                    </div>
-                    <div class="mb-2">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">B.</span>
-                            <input type="text" name="option_b_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
-                    </div>
-                    <div class="mb-2">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">C.</span>
-                            <input type="text" name="option_c_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
-                    </div>
                     <div class="mb-4">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">D.</span>
-                            <input type="text" name="option_d_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
+                        <label class="block text-gray-700 font-medium mb-2">题型</label>
+                        <select name="question_type_{{ i }}" class="form-control" required onchange="showTypeFields(this, {{ i }})">
+                            <option value="single">单选题</option>
+                            <option value="multiple">多选题</option>
+                            <option value="blank">填空题</option>
+                            <option value="short">简答题</option>
+                            <option value="judge">判断题</option>
+                        </select>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="choice-fields-{{ i }}">
+                        <div class="mb-2">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">A.</span>
+                                <input type="text" name="option_a_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">B.</span>
+                                <input type="text" name="option_b_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">C.</span>
+                                <input type="text" name="option_c_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                        <div class="mb-4">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">D.</span>
+                                <input type="text" name="option_d_{{ i }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="single-answer-{{ i }} mb-4">
                         <label class="block text-gray-700 font-medium mb-2">正确答案</label>
                         <div class="flex space-x-4">
                             <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_{{ i }}" value="A" class="form-radio h-4 w-4 text-blue-500" required>
+                                <input type="radio" name="correct_answer_{{ i }}" value="A" class="form-radio h-4 w-4 text-blue-500">
                                 <span class="ml-2">A</span>
                             </label>
                             <label class="inline-flex items-center">
@@ -81,6 +93,39 @@
                         </div>
                     </div>
 
+                    <div class="multiple-answer-{{ i }} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">正确答案（可多选）</label>
+                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="A"> A</label>
+                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="B"> B</label>
+                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="C"> C</label>
+                        <label><input type="checkbox" name="correct_answer_multi_{{ i }}" value="D"> D</label>
+                    </div>
+
+                    <div class="blank-answer-{{ i }} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">标准答案（填空题）</label>
+                        <input type="text" name="blank_answer_{{ i }}" class="form-control">
+                    </div>
+                    <div class="short-answer-{{ i }} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">参考答案（简答题）</label>
+                        <textarea name="short_answer_{{ i }}" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="judge-answer-{{ i }} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">正确答案（判断题）</label>
+                        <label>
+                            <input type="radio" name="judge_answer_{{ i }}" value="A"> 正确
+                        </label>
+                        <label>
+                            <input type="radio" name="judge_answer_{{ i }}" value="B"> 错误
+                        </label>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">试题解析</label>
+                        <textarea name="explanation_{{ i }}" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">图片材料（可选）</label>
+                        <input type="file" name="image_{{ i }}" accept="image/*">
+                    </div>
                     <button type="button" class="delete-question-btn text-red-500 hover:text-red-700">
                         <i class="fas fa-trash-alt mr-1"></i> 删除此试题
                     </button>
@@ -99,16 +144,31 @@
         </form>
     </div>
 
-    <!-- JavaScript 添加更多试题 -->
     <script>
+        function showTypeFields(select, idx) {
+            var type = select.value;
+            document.querySelector('.choice-fields-' + idx).style.display = (type === 'single' || type === 'multiple') ? '' : 'none';
+            document.querySelector('.single-answer-' + idx).style.display = (type === 'single') ? '' : 'none';
+            document.querySelector('.multiple-answer-' + idx).style.display = (type === 'multiple') ? '' : 'none';
+            document.querySelector('.blank-answer-' + idx).style.display = (type === 'blank') ? '' : 'none';
+            document.querySelector('.short-answer-' + idx).style.display = (type === 'short') ? '' : 'none';
+            document.querySelector('.judge-answer-' + idx).style.display = (type === 'judge') ? '' : 'none';
+        }
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('questions-container');
             const addBtn = document.getElementById('add-question-btn');
-            let count = 3; // 已有3道题
+            let count = 3;
+
+            // 初始化题型显示
+            for (let i = 1; i <= count; i++) {
+                showTypeFields(document.querySelector(`[name="question_type_${i}"]`), i);
+                document.querySelector(`[name="question_type_${i}"]`).addEventListener('change', function() {
+                    showTypeFields(this, i);
+                });
+            }
 
             addBtn.addEventListener('click', function() {
                 count++;
-
                 const newQuestion = document.createElement('div');
                 newQuestion.className = 'question-card bg-white rounded-lg shadow-md p-6';
                 newQuestion.innerHTML = `
@@ -116,42 +176,51 @@
                         <h3 class="font-medium">试题 ${count}</h3>
                         <span class="text-gray-500 text-sm">分值: <input type="number" name="score_${count}" min="1" value="1" class="w-16 px-2 py-1 border border-gray-300 rounded text-center"> 分</span>
                     </div>
-
                     <div class="mb-4">
                         <label class="block text-gray-700 font-medium mb-2">问题内容</label>
                         <textarea name="question_${count}" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
                     </div>
-
-                    <div class="mb-2">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">A.</span>
-                            <input type="text" name="option_a_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
-                    </div>
-                    <div class="mb-2">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">B.</span>
-                            <input type="text" name="option_b_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
-                    </div>
-                    <div class="mb-2">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">C.</span>
-                            <input type="text" name="option_c_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
-                    </div>
                     <div class="mb-4">
-                        <label class="flex items-center text-gray-700 font-medium mb-1">
-                            <span class="inline-block w-6">D.</span>
-                            <input type="text" name="option_d_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </label>
+                        <label class="block text-gray-700 font-medium mb-2">题型</label>
+                        <select name="question_type_${count}" class="form-control" required onchange="showTypeFields(this, ${count})">
+                            <option value="single">单选题</option>
+                            <option value="multiple">多选题</option>
+                            <option value="blank">填空题</option>
+                            <option value="short">简答题</option>
+                            <option value="judge">判断题</option>
+                        </select>
                     </div>
-
-                    <div class="mb-4">
+                    <div class="choice-fields-${count}">
+                        <div class="mb-2">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">A.</span>
+                                <input type="text" name="option_a_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">B.</span>
+                                <input type="text" name="option_b_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">C.</span>
+                                <input type="text" name="option_c_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                        <div class="mb-4">
+                            <label class="flex items-center text-gray-700 font-medium mb-1">
+                                <span class="inline-block w-6">D.</span>
+                                <input type="text" name="option_d_${count}" class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="single-answer-${count} mb-4">
                         <label class="block text-gray-700 font-medium mb-2">正确答案</label>
                         <div class="flex space-x-4">
                             <label class="inline-flex items-center">
-                                <input type="radio" name="correct_answer_${count}" value="A" class="form-radio h-4 w-4 text-blue-500" required>
+                                <input type="radio" name="correct_answer_${count}" value="A" class="form-radio h-4 w-4 text-blue-500">
                                 <span class="ml-2">A</span>
                             </label>
                             <label class="inline-flex items-center">
@@ -168,22 +237,57 @@
                             </label>
                         </div>
                     </div>
-
+                    <div class="multiple-answer-${count} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">正确答案（可多选）</label>
+                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="A"> A</label>
+                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="B"> B</label>
+                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="C"> C</label>
+                        <label><input type="checkbox" name="correct_answer_multi_${count}" value="D"> D</label>
+                    </div>
+                    <div class="blank-answer-${count} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">标准答案（填空题）</label>
+                        <input type="text" name="blank_answer_${count}" class="form-control">
+                    </div>
+                    <div class="short-answer-${count} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">参考答案（简答题）</label>
+                        <textarea name="short_answer_${count}" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="judge-answer-${count} mb-4" style="display:none;">
+                        <label class="block text-gray-700 font-medium mb-2">正确答案（判断题）</label>
+                        <label>
+                            <input type="radio" name="judge_answer_${count}" value="A"> 正确
+                        </label>
+                        <label>
+                            <input type="radio" name="judge_answer_${count}" value="B"> 错误
+                        </label>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">试题解析</label>
+                        <textarea name="explanation_${count}" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">图片材料（可选）</label>
+                        <input type="file" name="image_${count}" accept="image/*">
+                    </div>
                     <button type="button" class="delete-question-btn text-red-500 hover:text-red-700">
                         <i class="fas fa-trash-alt mr-1"></i> 删除此试题
                     </button>
                 `;
-
                 container.insertBefore(newQuestion, addBtn);
                 document.getElementById('question_count').value = count;
 
-                // 添加删除按钮事件
+                // 题型切换事件
+                newQuestion.querySelector(`[name="question_type_${count}"]`).addEventListener('change', function() {
+                    showTypeFields(this, count);
+                });
+                // 初始化显示
+                showTypeFields(newQuestion.querySelector(`[name="question_type_${count}"]`), count);
+
+                // 删除按钮事件
                 newQuestion.querySelector('.delete-question-btn').addEventListener('click', function() {
                     container.removeChild(newQuestion);
                     count--;
                     document.getElementById('question_count').value = count;
-
-                    // 更新剩余试题编号
                     updateQuestionNumbers();
                 });
             });
@@ -193,7 +297,6 @@
                 questions.forEach((question, index) => {
                     const num = index + 1;
                     question.querySelector('h3').textContent = `试题 ${num}`;
-
                     // 更新所有表单元素的名称
                     const elements = question.querySelectorAll('[name]');
                     elements.forEach(el => {
@@ -201,6 +304,11 @@
                         const prefix = name.split('_')[0];
                         el.name = `${prefix}_${num}`;
                     });
+                    // 更新题型切换事件
+                    const typeSelect = question.querySelector(`[name="question_type_${num}"]`);
+                    if (typeSelect) {
+                        typeSelect.onchange = function() { showTypeFields(this, num); };
+                    }
                 });
             }
         });
