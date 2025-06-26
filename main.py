@@ -383,7 +383,7 @@ def add_question(exam_id):
 
 
 
-# 查看学生数��
+# 查看学生数
 @app.route('/teacher/course/<int:course_id>/view_student_data')
 @login_required
 def view_student_data(course_id):
@@ -453,6 +453,11 @@ def take_exam(exam_id):
     exam = Exam.query.get_or_404(exam_id)
     questions = Question.query.filter_by(exam_id=exam_id).all()
 
+    # 检查 options 是否为 None，若为 None 则赋予空字典
+    for question in questions:
+        if question.options is None:
+            question.options = {}
+
     if request.method == 'POST':
         total_score = 0
         total_possible_score = sum(q.score for q in questions)
@@ -487,6 +492,7 @@ def exam_result(result_id):
 
     result = ExamResult.query.get_or_404(result_id)
     exam = result.exam
+    # 确保查看的是自己的考试结果
     if result.user_id != current_user.id:
         abort(403)
 
@@ -519,10 +525,12 @@ def learning_progress():
     if current_user.role != 'student':
         abort(403)
 
-    # 获取所有课程
+    # 获取所有课程和学习进度
     courses = Course.query.all()
     # 获取当前用户所有进度记录
     progress_records = LearningProgress.query.filter_by(user_id=current_user.id).all()
+
+    # 构建课程与进度的映射
     progress_map = {record.course_id: record for record in progress_records}
 
     # 构建每门课程的进度数据，若无记录则补全默认值
