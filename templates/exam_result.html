@@ -1,30 +1,42 @@
 {% extends "base.html" %}
 
-{% block title %}考试结果 - EduHub{% endblock %}
+{% block title %}考试结果 - {{ exam.title }}{% endblock %}
 
 {% block content %}
-<h2>考试结果</h2>
-<p>{{ exam.title }} - {{ exam.course.title }}</p>
-
-<div class="card mb-6">
-    <div class="card-body text-center">
-        <div class="text-4xl font-bold text-primary mb-2">{{ result.score }}</div>
-        <p class="text-lg mb-4">得分 / {{ total_score }}</p>
-        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-            <div class="bg-primary h-2.5 rounded-full" style="width: {{ (result.score / total_score * 100) }}%"></div>
-        </div>
-        <p class="text-gray-600 mb-4">考试时间: {{ result.submit_time }}</p>
-    </div>
-</div>
-
-<h3 class="text-lg font-semibold mb-4">试题解析</h3>
-{% for question_result in question_results %}
-<div class="question-result {% if question_result.is_correct %}correct{% else %}incorrect{% endif %}">
-    <div class="question-text">{{ loop.index }}. {{ question_result.question.question_text }}</div>
-    <div class="student-answer">你的答案: {{ question_result.student_answer|default('未作答') }}</div>
-    <div class="correct-answer">
-        正确答案: {{ question_result.question.correct_answer }}. {{ question_result.question.options[question_result.question.correct_answer] }}
-    </div>
-</div>
-{% endfor %}
+<h2>{{ exam.title }} - 考试结果</h2>
+<p>得分：{{ result.score }} / {{ total_score }}</p>
+<hr>
+{% if questions %}
+    <h3>试题详情</h3>
+    <ol>
+    {% for question in questions %}
+        <li style="margin-bottom: 1.5em;">
+            <div>
+                <strong>{{ loop.index }}. {{ question.question_text }}</strong>
+            </div>
+            <ul>
+                {% for key, value in question.options.items() %}
+                    <li>
+                        {{ key }}. {{ value }}
+                        {% if key == question.correct_answer %}
+                            <span style="color: green;">（正确答案）</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            <!-- 如有学生作答信息，可在此显示 -->
+            {#
+            <div>
+                你的答案：{{ student_answer_map[question.id] if student_answer_map else '未作答' }}
+            </div>
+            #}
+            {% if question.explanation %}
+            <div style="color: #888; margin-top: 0.5em;">
+                <strong>试题解析：</strong>{{ question.explanation }}
+            </div>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ol>
+{% endif %}
 {% endblock %}

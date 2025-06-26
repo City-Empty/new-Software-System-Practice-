@@ -347,7 +347,7 @@ def view_questions(exam_id):
     return render_template('view_questions.html', exam=exam, questions=questions)
 
 
-# 添加试题
+# 添加/编辑试题
 @app.route('/teacher/exam/<int:exam_id>/add_question', methods=['GET', 'POST'])
 @login_required
 def add_question(exam_id):
@@ -355,6 +355,10 @@ def add_question(exam_id):
         abort(403)
 
     exam = Exam.query.get_or_404(exam_id)
+    question_id = request.args.get('question_id', type=int)
+    question = None
+    if question_id:
+        question = Question.query.filter_by(id=question_id, exam_id=exam_id).first_or_404()
 
     if request.method == 'POST':
         question_text = request.form['question_text']
@@ -364,6 +368,7 @@ def add_question(exam_id):
         option_d = request.form['option_d']
         correct_answer = request.form['correct_answer']
         score = int(request.form.get('score', 1))
+        explanation = request.form.get('explanation', '')
 
         options = {
             'A': option_a,
@@ -372,20 +377,30 @@ def add_question(exam_id):
             'D': option_d
         }
 
-        new_question = Question(
-            exam_id=exam_id,
-            question_text=question_text,
-            options=options,
-            correct_answer=correct_answer,
-            score=score
-        )
-        db.session.add(new_question)
-        db.session.commit()
-
-        flash('试题添加成功')
+        if question:  # 编辑
+            question.question_text = question_text
+            question.options = options
+            question.correct_answer = correct_answer
+            question.score = score
+            question.explanation = explanation
+            db.session.commit()
+            flash('试题编辑成功')
+        else:  # 新增
+            new_question = Question(
+                exam_id=exam_id,
+                question_text=question_text,
+                options=options,
+                correct_answer=correct_answer,
+                score=score,
+                explanation=explanation
+            )
+            db.session.add(new_question)
+            db.session.commit()
+            flash('试题添加成功')
         return redirect(url_for('view_questions', exam_id=exam_id))
 
-    return render_template('add_question.html', exam=exam)
+    # GET请求，渲染表单，若为编辑则传递question
+    return render_template('add_question.html', exam=exam, question=question)
 
 
 
@@ -497,7 +512,15 @@ def exam_result(result_id):
     if result.user_id != current_user.id:
         abort(403)
     total_score = result.total_possible_score  # 获取总分
-    return render_template('exam_result.html', result=result ,exam=exam,total_score=total_score)
+
+    # 获取所有试题
+    questions = Question.query.filter_by(exam_id=exam.id).all()
+    # 获取学生作答
+    # 假设ExamResult表有字段存储学生答案（如answer_json），否则这里无法显示学生作答
+    # 这里假设没有存储学生答案，暂时无法显示学生作答，仅显示正确答案和解析
+    # 如需支持学生作答回显，请在ExamResult中增加answer_json字段并在提交考试时保存
+
+    return render_template('exam_result.html', result=result, exam=exam, total_score=total_score, questions=questions)
 
 
 # 学生学习进度
@@ -522,12 +545,12 @@ def student_courses():
     if current_user.role != 'student':
         abort(403)
     courses = current_user.enrolled_courses
-    # 构建 results_map
+    # 构建 results_map，key为(exam.id, user_id)
     results_map = {}
     exam_results = ExamResult.query.filter_by(user_id=current_user.id).all()
     for result in exam_results:
-        results_map[(result.exam_id, current_user.id)] = result
-    return render_template('student_courses.html', courses=courses, results_map=results_map)
+        results_map[(result.exam_id, result.user_id)] = result
+    return render_template('student_courses.html', courses=courses, results_map=results_map, current_user=current_user)
 
 
 @app.route('/student/exams')

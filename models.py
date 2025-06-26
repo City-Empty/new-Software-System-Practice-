@@ -53,6 +53,7 @@ class Question(db.Model):
     options = db.Column(db.JSON, nullable=False)  # 存储选项的JSON字段
     correct_answer = db.Column(db.String(10), nullable=False)  # 正确答案
     score = db.Column(db.Integer, default=1)  # 试题分值
+    explanation = db.Column(db.Text)  # 新增：试题解析
 
 
 class ExamResult(db.Model):

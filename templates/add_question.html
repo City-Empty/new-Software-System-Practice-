@@ -1,47 +1,51 @@
 {% extends "base.html" %}
 
-{% block title %}添加试题 - {{ exam.title }}{% endblock %}
+{% block title %}{{ question and '编辑试题' or '添加试题' }} - {{ exam.title }}{% endblock %}
 
 {% block content %}
-<h2>添加试题 - {{ exam.title }}</h2>
+<h2>{{ question and '编辑试题' or '添加试题' }} - {{ exam.title }}</h2>
 <p>请填写试题内容和选项</p>
 
-<form method="POST" action="{{ url_for('add_question', exam_id=exam.id) }}">
+<form method="POST" action="{{ url_for('add_question', exam_id=exam.id, question_id=question.id if question) }}">
     <div class="form-group">
         <label for="question_text">试题内容</label>
-        <textarea id="question_text" name="question_text" class="form-control" rows="3" required></textarea>
+        <textarea id="question_text" name="question_text" class="form-control" rows="3" required>{{ question.question_text if question else '' }}</textarea>
     </div>
     <div class="form-group">
         <label for="option_a">选项A</label>
-        <input type="text" id="option_a" name="option_a" class="form-control" required>
+        <input type="text" id="option_a" name="option_a" class="form-control" required value="{{ question.options['A'] if question else '' }}">
     </div>
     <div class="form-group">
         <label for="option_b">选项B</label>
-        <input type="text" id="option_b" name="option_b" class="form-control" required>
+        <input type="text" id="option_b" name="option_b" class="form-control" required value="{{ question.options['B'] if question else '' }}">
     </div>
     <div class="form-group">
         <label for="option_c">选项C</label>
-        <input type="text" id="option_c" name="option_c" class="form-control" required>
+        <input type="text" id="option_c" name="option_c" class="form-control" required value="{{ question.options['C'] if question else '' }}">
     </div>
     <div class="form-group">
         <label for="option_d">选项D</label>
-        <input type="text" id="option_d" name="option_d" class="form-control" required>
+        <input type="text" id="option_d" name="option_d" class="form-control" required value="{{ question.options['D'] if question else '' }}">
     </div>
     <div class="form-group">
         <label for="correct_answer">正确答案</label>
         <select id="correct_answer" name="correct_answer" class="form-control" required>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
+            <option value="A" {% if question and question.correct_answer == 'A' %}selected{% endif %}>A</option>
+            <option value="B" {% if question and question.correct_answer == 'B' %}selected{% endif %}>B</option>
+            <option value="C" {% if question and question.correct_answer == 'C' %}selected{% endif %}>C</option>
+            <option value="D" {% if question and question.correct_answer == 'D' %}selected{% endif %}>D</option>
         </select>
     </div>
     <div class="form-group">
         <label for="score">分值</label>
-        <input type="number" id="score" name="score" class="form-control" value="1" min="1" required>
+        <input type="number" id="score" name="score" class="form-control" value="{{ question.score if question else 1 }}" min="1" required>
+    </div>
+    <div class="form-group">
+        <label for="explanation">试题解析</label>
+        <textarea id="explanation" name="explanation" class="form-control" rows="2" placeholder="请输入试题解析">{{ question.explanation if question else '' }}</textarea>
     </div>
     <div class="form-group text-center">
-        <button type="submit" class="btn">添加试题</button>
+        <button type="submit" class="btn">{{ question and '保存修改' or '添加试题' }}</button>
     </div>
 </form>
 {% endblock %}
