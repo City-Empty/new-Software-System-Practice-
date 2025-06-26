@@ -470,8 +470,8 @@ def course_forum():
         db.session.commit()
         flash('帖子发布成功')
         return redirect(url_for('course_forum'))
-
-    forum_posts = ForumPost.query.all()
+        # 按创建时间降序排列（新的在上面）
+    forum_posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
     return render_template('course_forum.html', forum_posts=forum_posts)
 
 @app.route('/forum/reply/<int:post_id>', methods=['POST'])
