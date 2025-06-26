@@ -1,97 +1,91 @@
 {% extends "base.html" %}
 
-{% block title %}{{ question and '编辑试题' or '添加试题' }} - {{ exam.title }}{% endblock %}
+{% block title %}添加试题 - {{ exam.title }}{% endblock %}
 
 {% block content %}
-<h2>{{ question and '编辑试题' or '添加试题' }} - {{ exam.title }}</h2>
+<h2>添加试题 - {{ exam.title }}</h2>
 <p>请填写试题内容和选项</p>
 
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('add_question', exam_id=exam.id, question_id=question.id if question) }}">
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('add_question', exam_id=exam.id) }}">
     <div class="form-group">
         <label for="question_text">试题内容</label>
-        <textarea id="question_text" name="question_text" class="form-control" rows="3" required>{{ question.question_text if question else '' }}</textarea>
+        <textarea id="question_text" name="question_text" class="form-control" rows="3" required></textarea>
     </div>
     <div class="form-group">
         <label for="question_type">题型</label>
         <select id="question_type" name="question_type" class="form-control" required onchange="showTypeFields()">
-            <option value="single" {% if question and question.question_type == 'single' %}selected{% endif %}>单选题</option>
-            <option value="multiple" {% if question and question.question_type == 'multiple' %}selected{% endif %}>多选题</option>
-            <option value="blank" {% if question and question.question_type == 'blank' %}selected{% endif %}>填空题</option>
-            <option value="short" {% if question and question.question_type == 'short' %}selected{% endif %}>简答题</option>
-            <option value="judge" {% if question and question.question_type == 'judge' %}selected{% endif %}>判断题</option>
+            <option value="single">单选题</option>
+            <option value="multiple">多选题</option>
+            <option value="blank">填空题</option>
+            <option value="short">简答题</option>
+            <option value="judge">判断题</option>
         </select>
     </div>
     <div id="choice-fields" style="display:none;">
         <div class="form-group">
             <label for="option_a">选项A</label>
-            <input type="text" id="option_a" name="option_a" class="form-control" value="{{ question.options['A'] if question and question.options and question.question_type in ['single','multiple'] else '' }}">
+            <input type="text" id="option_a" name="option_a" class="form-control">
         </div>
         <div class="form-group">
             <label for="option_b">选项B</label>
-            <input type="text" id="option_b" name="option_b" class="form-control" value="{{ question.options['B'] if question and question.options and question.question_type in ['single','multiple'] else '' }}">
+            <input type="text" id="option_b" name="option_b" class="form-control">
         </div>
         <div class="form-group">
             <label for="option_c">选项C</label>
-            <input type="text" id="option_c" name="option_c" class="form-control" value="{{ question.options['C'] if question and question.options and question.question_type in ['single','multiple'] else '' }}">
+            <input type="text" id="option_c" name="option_c" class="form-control">
         </div>
         <div class="form-group">
             <label for="option_d">选项D</label>
-            <input type="text" id="option_d" name="option_d" class="form-control" value="{{ question.options['D'] if question and question.options and question.question_type in ['single','multiple'] else '' }}">
+            <input type="text" id="option_d" name="option_d" class="form-control">
         </div>
     </div>
     <div id="single-answer" class="form-group" style="display:none;">
         <label for="correct_answer">正确答案</label>
         <select id="correct_answer" name="correct_answer" class="form-control">
-            <option value="A" {% if question and question.correct_answer == 'A' %}selected{% endif %}>A</option>
-            <option value="B" {% if question and question.correct_answer == 'B' %}selected{% endif %}>B</option>
-            <option value="C" {% if question and question.correct_answer == 'C' %}selected{% endif %}>C</option>
-            <option value="D" {% if question and question.correct_answer == 'D' %}selected{% endif %}>D</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
         </select>
     </div>
     <div id="multiple-answer" class="form-group" style="display:none;">
         <label>正确答案（可多选）</label><br>
-        {% set correct_multi = (question.correct_answer.split(',') if question and question.question_type == 'multiple' and question.correct_answer else []) %}
-        <label><input type="checkbox" name="correct_answer_multi" value="A" {% if 'A' in correct_multi %}checked{% endif %}> A</label>
-        <label><input type="checkbox" name="correct_answer_multi" value="B" {% if 'B' in correct_multi %}checked{% endif %}> B</label>
-        <label><input type="checkbox" name="correct_answer_multi" value="C" {% if 'C' in correct_multi %}checked{% endif %}> C</label>
-        <label><input type="checkbox" name="correct_answer_multi" value="D" {% if 'D' in correct_multi %}checked{% endif %}> D</label>
+        <label><input type="checkbox" name="correct_answer_multi" value="A"> A</label>
+        <label><input type="checkbox" name="correct_answer_multi" value="B"> B</label>
+        <label><input type="checkbox" name="correct_answer_multi" value="C"> C</label>
+        <label><input type="checkbox" name="correct_answer_multi" value="D"> D</label>
     </div>
     <div id="blank-answer" class="form-group" style="display:none;">
         <label for="blank_answer">标准答案（填空题）</label>
-        <input type="text" id="blank_answer" name="blank_answer" class="form-control" value="{{ question.correct_answer if question and question.question_type == 'blank' else '' }}">
+        <input type="text" id="blank_answer" name="blank_answer" class="form-control">
     </div>
     <div id="short-answer" class="form-group" style="display:none;">
         <label for="short_answer">参考答案（简答题）</label>
-        <textarea id="short_answer" name="short_answer" class="form-control" rows="2">{{ question.correct_answer if question and question.question_type == 'short' else '' }}</textarea>
+        <textarea id="short_answer" name="short_answer" class="form-control" rows="2"></textarea>
     </div>
     <div id="judge-answer" class="form-group" style="display:none;">
         <label>正确答案（判断题）</label><br>
         <label>
-            <input type="radio" name="judge_answer" value="A" {% if question and question.question_type == 'judge' and question.correct_answer == 'A' %}checked{% endif %}> 正确
+            <input type="radio" name="judge_answer" value="A"> 正确
         </label>
         <label>
-            <input type="radio" name="judge_answer" value="B" {% if question and question.question_type == 'judge' and question.correct_answer == 'B' %}checked{% endif %}> 错误
+            <input type="radio" name="judge_answer" value="B"> 错误
         </label>
     </div>
     <div class="form-group">
         <label for="score">分值</label>
-        <input type="number" id="score" name="score" class="form-control" value="{{ question.score if question else 1 }}" min="1" required>
+        <input type="number" id="score" name="score" class="form-control" value="1" min="1" required>
     </div>
     <div class="form-group">
         <label for="explanation">试题解析</label>
-        <textarea id="explanation" name="explanation" class="form-control" rows="2" placeholder="请输入试题解析">{{ question.explanation if question else '' }}</textarea>
+        <textarea id="explanation" name="explanation" class="form-control" rows="2" placeholder="请输入试题解析"></textarea>
     </div>
     <div class="form-group">
         <label for="image">图片材料（可选）</label>
         <input type="file" id="image" name="image" accept="image/*">
-        {% if question and question.image %}
-            <div>
-                <img src="/{{ question.image }}" alt="题目图片" style="max-width:200px;max-height:200px;">
-            </div>
-        {% endif %}
     </div>
     <div class="form-group text-center">
-        <button type="submit" class="btn">{{ question and '保存修改' or '添加试题' }}</button>
+        <button type="submit" class="btn">添加试题</button>
     </div>
 </form>
 

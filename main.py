@@ -347,9 +347,7 @@ def view_questions(exam_id):
 def add_question(exam_id):
     if current_user.role != 'teacher':
         abort(403)
-
     exam = Exam.query.get_or_404(exam_id)
-
     if request.method == 'POST':
         question_text = request.form['question_text']
         option_a = request.form['option_a']
@@ -358,14 +356,12 @@ def add_question(exam_id):
         option_d = request.form['option_d']
         correct_answer = request.form['correct_answer']
         score = int(request.form.get('score', 1))
-
         options = {
             'A': option_a,
             'B': option_b,
             'C': option_c,
             'D': option_d
         }
-
         new_question = Question(
             exam_id=exam_id,
             question_text=question_text,
@@ -375,12 +371,40 @@ def add_question(exam_id):
         )
         db.session.add(new_question)
         db.session.commit()
-
         flash('试题添加成功')
         return redirect(url_for('view_questions', exam_id=exam_id))
+    return render_template('add_question.html', exam=exam, question=None)
 
-    return render_template('add_question.html', exam=exam)
-
+# 编辑试题
+@app.route('/teacher/exam/<int:exam_id>/question/<int:question_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_question(exam_id, question_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    exam = Exam.query.get_or_404(exam_id)
+    question = Question.query.get_or_404(question_id)
+    if question.exam_id != exam.id:
+        abort(400)
+    if request.method == 'POST':
+        question.question_text = request.form['question_text']
+        question.option_a = request.form.get('option_a')
+        question.option_b = request.form.get('option_b')
+        question.option_c = request.form.get('option_c')
+        question.option_d = request.form.get('option_d')
+        # 更新选项
+        question.options = {
+            'A': question.option_a,
+            'B': question.option_b,
+            'C': question.option_c,
+            'D': question.option_d
+        }
+        question.correct_answer = request.form.get('correct_answer')
+        question.score = int(request.form.get('score', 1))
+        question.explanation = request.form.get('explanation')
+        db.session.commit()
+        flash('试题修改成功')
+        return redirect(url_for('view_questions', exam_id=exam_id))
+    return render_template('edit_question.html', exam=exam, question=question)
 
 
 # 删除试题

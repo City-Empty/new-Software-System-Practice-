@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}编辑试题 - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<h2>编辑试题 - {{ exam.title }}</h2>
+<p>可修改试题内容和选项</p>
+
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('edit_question', exam_id=exam.id, question_id=question.id) }}">
+    <div class="form-group">
+        <label for="question_text">试题内容</label>
+        <textarea id="question_text" name="question_text" class="form-control" rows="3" required>{{ question.question_text }}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="option_a">选项A</label>
+        <input type="text" id="option_a" name="option_a" class="form-control" value="{{ question.options['A'] if question.options else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="option_b">选项B</label>
+        <input type="text" id="option_b" name="option_b" class="form-control" value="{{ question.options['B'] if question.options else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="option_c">选项C</label>
+        <input type="text" id="option_c" name="option_c" class="form-control" value="{{ question.options['C'] if question.options else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="option_d">选项D</label>
+        <input type="text" id="option_d" name="option_d" class="form-control" value="{{ question.options['D'] if question.options else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="correct_answer">正确答案</label>
+        <select id="correct_answer" name="correct_answer" class="form-control">
+            <option value="A" {% if question.correct_answer == 'A' %}selected{% endif %}>A</option>
+            <option value="B" {% if question.correct_answer == 'B' %}selected{% endif %}>B</option>
+            <option value="C" {% if question.correct_answer == 'C' %}selected{% endif %}>C</option>
+            <option value="D" {% if question.correct_answer == 'D' %}selected{% endif %}>D</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="score">分值</label>
+        <input type="number" id="score" name="score" class="form-control" value="{{ question.score }}" min="1" required>
+    </div>
+    <div class="form-group">
+        <label for="explanation">试题解析</label>
+        <textarea id="explanation" name="explanation" class="form-control" rows="2">{{ question.explanation or '' }}</textarea>
+    </div>
+    <div class="form-group text-center">
+        <button type="submit" class="btn">保存修改</button>
+    </div>
+</form>
+{% endblock %}
+
