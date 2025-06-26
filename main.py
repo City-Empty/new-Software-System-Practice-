@@ -487,11 +487,29 @@ def exam_result(result_id):
 
     result = ExamResult.query.get_or_404(result_id)
     exam = result.exam
-    # 确保查看的是自己的考试结果
     if result.user_id != current_user.id:
         abort(403)
 
-    return render_template('exam_result.html', result=result)
+    # 获取试题
+    questions = Question.query.filter_by(exam_id=exam.id).all()
+    # 解析学生答案
+    student_answers = {}
+    if result.answer_json:
+        try:
+            student_answers = json.loads(result.answer_json)
+        except Exception:
+            student_answers = {}
+    else:
+        student_answers = {}
+
+    return render_template(
+        'exam_result.html',
+        result=result,
+        exam=exam,
+        questions=questions,
+        total_score=result.total_possible_score,
+        student_answers=student_answers
+    )
 
 
 # 学生学习进度
