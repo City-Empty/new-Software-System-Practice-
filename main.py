@@ -572,6 +572,19 @@ def teacher_students_progress(course_id):
         })
     return render_template('teacher_students_progress.html', course=course, student_progress=student_progress)
 
+# 教师查看所有考试
+@app.route('/teacher/exams')
+@login_required
+def teacher_all_exams():
+    if current_user.role != 'teacher':
+        abort(403)
+    # 获取该教师所有课程下的所有考试
+    courses = Course.query.filter_by(teacher_id=current_user.id).all()
+    exams = []
+    for course in courses:
+        exams.extend(course.exams)
+    return render_template('teacher_all_exams.html', exams=exams)
+
 
 
 if __name__ == '__main__':

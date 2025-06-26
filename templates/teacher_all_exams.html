@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}所有考试 - EduHub{% endblock %}
+{% block content %}
+<h2 class="mb-4">我的所有考试</h2>
+<table class="table-auto w-full border">
+    <thead>
+        <tr>
+            <th class="px-4 py-2 border">考试名称</th>
+            <th class="px-4 py-2 border">所属课程</th>
+            <th class="px-4 py-2 border">考试时长(分钟)</th>
+            <th class="px-4 py-2 border">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for exam in exams %}
+        <tr>
+            <td class="border px-4 py-2">{{ exam.title }}</td>
+            <td class="border px-4 py-2">{{ exam.course.title }}</td>
+            <td class="border px-4 py-2">{{ exam.duration }}</td>
+            <td class="border px-4 py-2">
+                <a href="{{ url_for('view_questions', exam_id=exam.id) }}" class="text-primary">查看试题</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4" class="text-center text-gray-500 py-4">暂无考试</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
