@@ -95,3 +95,24 @@
 .forum-form {
     margin-bottom: 32px;
 }
+
+/**按钮样式/
+.custom-file-btn {
+    display: inline-block;
+    padding: 8px 20px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+.custom-file-btn:hover {
+    background: #1d4ed8;
+}
+.file-name {
+    font-size: 14px;
+    color: #555;
+}
+ */
