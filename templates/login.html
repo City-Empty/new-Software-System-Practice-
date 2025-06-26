@@ -8,6 +8,15 @@
 
 
 <div class="form-container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+       <div style="color: red; margin-bottom: 10px;">
+       {% for message in messages %}
+        {{ message }}
+       {% endfor %}
+       </div>
+     {% endif %}
+    {% endwith %}
    <form method="POST" action="{{ url_for('login') }}">
      <div class="form-group">
         <label for="username">用户名</label>
