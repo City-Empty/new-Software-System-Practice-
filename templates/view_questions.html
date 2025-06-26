@@ -22,6 +22,9 @@
                 <a href="{{ url_for('add_question', exam_id=exam.id, question_id=question.id) }}" class="text-sm text-primary">
                     编辑试题 <i class="fa fa-pencil ml-1"></i>
                 </a>
+                <form method="post" action="{{ url_for('delete_question', exam_id=exam.id, question_id=question.id) }}" style="display:inline;" onsubmit="return confirm('确定要删除该试题吗？');">
+                    <button type="submit" class="text-sm text-red-600 bg-transparent border-none cursor-pointer">删除试题 <i class="fa fa-trash ml-1"></i></button>
+                </form>
             </div>
         </div>
     </div>

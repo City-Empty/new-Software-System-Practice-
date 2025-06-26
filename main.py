@@ -383,6 +383,22 @@ def add_question(exam_id):
 
 
 
+# 删除试题
+@app.route('/teacher/exam/<int:exam_id>/question/<int:question_id>/delete', methods=['POST'])
+@login_required
+def delete_question(exam_id, question_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    exam = Exam.query.get_or_404(exam_id)
+    question = Question.query.get_or_404(question_id)
+    if question.exam_id != exam.id:
+        abort(400)
+    db.session.delete(question)
+    db.session.commit()
+    flash('试题已删除')
+    return redirect(url_for('view_questions', exam_id=exam_id))
+
+
 # 查看学生数
 @app.route('/teacher/course/<int:course_id>/view_student_data')
 @login_required
