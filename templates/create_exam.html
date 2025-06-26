@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-4">
   <h3 class="mb-4">创建考试</h3>
-  <form method="post" id="examForm">
+  <form method="post" id="examForm" enctype="multipart/form-data">
     <div class="card mb-4">
       <div class="card-header bg-light">
         <strong>考试基本信息</strong>
@@ -57,33 +57,37 @@ function addQuestion() {
      </div>
     <div class="mb-2">
       <label>题型</label>
-      <select class="form-select" name="question_type_${questionIndex}" required>
+      <select class="form-select" name="question_type_${questionIndex}" required onchange="showFieldsByType(this, ${questionIndex})">
         <option value="single">单选题</option>
         <option value="multiple">多选题</option>
-        <option value="truefalse">判断题</option>
+        <option value="judge">判断题</option>
+        <option value="blank">填空题</option>
+        <option value="short">简答题</option>
       </select>
     </div>
-    <div class="row mb-2">
-      <div class="col">
-        <label>A</label>
-        <input type="text" class="form-control" name="option_a_${questionIndex}" required>
-      </div>
-      <div class="col">
-        <label>B</label>
-        <input type="text" class="form-control" name="option_b_${questionIndex}" required>
-      </div>
-      <div class="col">
-        <label>C</label>
-        <input type="text" class="form-control" name="option_c_${questionIndex}" required>
-      </div>
-      <div class="col">
-        <label>D</label>
-        <input type="text" class="form-control" name="option_d_${questionIndex}" required>
+    <div id="choice-options-${questionIndex}">
+      <div class="row mb-2">
+        <div class="col">
+          <label>A</label>
+          <input type="text" class="form-control" name="option_a_${questionIndex}">
+        </div>
+        <div class="col">
+          <label>B</label>
+          <input type="text" class="form-control" name="option_b_${questionIndex}">
+        </div>
+        <div class="col">
+          <label>C</label>
+          <input type="text" class="form-control" name="option_c_${questionIndex}">
+        </div>
+        <div class="col">
+          <label>D</label>
+          <input type="text" class="form-control" name="option_d_${questionIndex}">
+        </div>
       </div>
     </div>
-    <div class="mb-2">
+    <div class="mb-2" id="single-answer-${questionIndex}">
       <label>正确答案</label>
-      <select class="form-select" name="correct_answer_${questionIndex}" required>
+      <select class="form-select" name="correct_answer_${questionIndex}">
         <option value="">请选择</option>
         <option value="A">A</option>
         <option value="B">B</option>
@@ -91,18 +95,52 @@ function addQuestion() {
         <option value="D">D</option>
       </select>
     </div>
+    <div class="mb-2" id="multiple-answer-${questionIndex}" style="display:none;">
+      <label>正确答案（可多选，按Ctrl多选）</label>
+      <select class="form-select" name="correct_answer_${questionIndex}" multiple>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+    <div class="mb-2" id="judge-answer-${questionIndex}" style="display:none;">
+      <label>正确答案</label>
+      <select class="form-select" name="correct_answer_${questionIndex}">
+        <option value="True">正确</option>
+        <option value="False">错误</option>
+      </select>
+    </div>
+    <div class="mb-2" id="blank-answer-${questionIndex}" style="display:none;">
+      <label>参考答案</label>
+      <input type="text" class="form-control" name="correct_answer_${questionIndex}">
+    </div>
+    <div class="mb-2" id="short-answer-${questionIndex}" style="display:none;">
+      <label>参考答案</label>
+      <textarea class="form-control" name="correct_answer_${questionIndex}" rows="2"></textarea>
+    </div>
     <div class="mb-2">
       <label>分值</label>
       <input type="number" class="form-control" name="score_${questionIndex}" value="1" min="1" required>
     </div>
   `;
   area.appendChild(qDiv);
+  showFieldsByType(qDiv.querySelector('select[name="question_type_' + questionIndex + '"]'), questionIndex);
 }
 function updateCount() {
   // 重新统计题目数
   const area = document.getElementById('questionsArea');
   const count = area.querySelectorAll('.border.rounded').length;
   document.getElementById('questionCount').value = count;
+}
+function showFieldsByType(select, idx) {
+  const type = select.value;
+  document.getElementById('choice-options-' + idx).style.display = (type === 'single' || type === 'multiple') ? '' : 'none';
+  document.getElementById('single-answer-' + idx).style.display = (type === 'single') ? '' : 'none';
+  document.getElementById('multiple-answer-' + idx).style.display = (type === 'multiple') ? '' : 'none';
+  document.getElementById('judge-answer-' + idx).style.display = (type === 'judge') ? '' : 'none';
+  document.getElementById('blank-answer-' + idx).style.display = (type === 'blank') ? '' : 'none';
+  document.getElementById('short-answer-' + idx).style.display = (type === 'short') ? '' : 'none';
 }
 </script>
 {% endblock %}
