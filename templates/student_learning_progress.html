@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ student.username }}的学习进度 - {{ course.title }}{% endblock %}
+{% block content %}
+<h2>{{ student.username }} - {{ course.title }} 学习进度</h2>
+{% if progress %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>视频观看百分比</th>
+            <th>考试完成状态</th>
+            <th>综合进度百分比</th>
+            <th>更新时间</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ progress.video_watched_percentage }}%</td>
+            <td>{{ '已完成' if progress.exam_completed else '未完成' }}</td>
+            <td>{{ progress.progress_percentage }}%</td>
+            <td>{{ progress.updated_at }}</td>
+        </tr>
+    </tbody>
+</table>
+{% else %}
+<div class="card">
+    <div class="card-body text-center">
+        <i class="fa fa-info-circle text-4xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500">暂无学习进度数据</p>
+    </div>
+</div>
+{% endif %}
+<a href="{{ url_for('teacher_students_progress', course_id=course.id) }}" class="btn mt-4">返回学生进度列表</a>
+{% endblock %}
