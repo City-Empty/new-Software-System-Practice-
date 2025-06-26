@@ -501,14 +501,36 @@ def learning_progress():
     if current_user.role != 'student':
         abort(403)
 
-    # 获取所有课程和学习进度
+    # 获取所有课程
     courses = Course.query.all()
+    # 获取当前用户所有进度记录
     progress_records = LearningProgress.query.filter_by(user_id=current_user.id).all()
-
-    # 构建课程与进度的映射
     progress_map = {record.course_id: record for record in progress_records}
 
-    return render_template('learning_progress.html', courses=courses, progress_map=progress_map)
+    # 构建每门课程的进度数据，若无记录则补全默认值
+    progress = []
+    for course in courses:
+        record = progress_map.get(course.id)
+        if record:
+            video_watched_percentage = record.video_watched_percentage or 0
+            exam_completed = record.exam_completed
+            progress_percentage = record.progress_percentage or 0
+            updated_at = record.updated_at
+        else:
+            # 没有进度记录，全部为0/未完成
+            video_watched_percentage = 0
+            exam_completed = False
+            progress_percentage = 0
+            updated_at = None
+        progress.append({
+            'course': course,
+            'video_watched_percentage': video_watched_percentage,
+            'exam_completed': exam_completed,
+            'progress_percentage': progress_percentage,
+            'updated_at': updated_at
+        })
+
+    return render_template('learning_progress.html', progress=progress)
 
 @app.route('/student/courses')
 @login_required
@@ -580,7 +602,28 @@ def teacher_view_student_progress(student_id):
     if student not in course.students:
         abort(403)
     progress = LearningProgress.query.filter_by(user_id=student_id, course_id=course_id).first()
-    return render_template('student_learning_progress.html', student=student, course=course, progress=progress)
+    # 新增：构建进度数据，保证模板字段完整
+    if progress:
+        video_watched_percentage = progress.video_watched_percentage or 0
+        exam_completed = progress.exam_completed
+        progress_percentage = progress.progress_percentage or 0
+        updated_at = progress.updated_at
+    else:
+        video_watched_percentage = 0
+        exam_completed = False
+        progress_percentage = 0
+        updated_at = None
+    # 传递详细进度数据给模板
+    return render_template(
+        'student_learning_progress.html',
+        student=student,
+        course=course,
+        progress=progress,
+        video_watched_percentage=video_watched_percentage,
+        exam_completed=exam_completed,
+        progress_percentage=progress_percentage,
+        updated_at=updated_at
+    )
 
 
 # 教师查看所有考试

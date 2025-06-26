@@ -6,9 +6,9 @@
     <thead>
         <tr>
             <th>课程名称</th>
-            <th>视频观看状态</th>
+            <th>视频观看百分比</th>
             <th>考试完成状态</th>
-            <th>进度百分比</th>
+            <th>综合进度百分比</th>
             <th>更新时间</th>
         </tr>
     </thead>
@@ -16,10 +16,10 @@
         {% for p in progress %}
         <tr>
             <td>{{ p.course.title }}</td>
-            <td>{{ '已观看' if p.video_watched else '未观看' }}</td>
+            <td>{{ p.video_watched_percentage }}%</td>
             <td>{{ '已完成' if p.exam_completed else '未完成' }}</td>
             <td>{{ p.progress_percentage }}%</td>
-            <td>{{ p.updated_at }}</td>
+            <td>{{ p.updated_at if p.updated_at else '-' }}</td>
         </tr>
         {% endfor %}
     </tbody>
