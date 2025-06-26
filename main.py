@@ -419,7 +419,7 @@ def course_forum():
         flash('帖子发布成功')
         return redirect(url_for('course_forum'))
 
-    forum_posts = ForumPost.query.all()
+    forum_posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
     return render_template('course_forum.html', forum_posts=forum_posts)
 
 @app.route('/forum/reply/<int:post_id>', methods=['POST'])
@@ -489,7 +489,7 @@ def exam_result(result_id):
     if result.user_id != current_user.id:
         abort(403)
 
-    return render_template('exam_result.html', result=result)
+    return render_template('exam_result.html', result=result,exam=exam,total_score=result.total_possible_score)
 
 
 # 学生学习进度
