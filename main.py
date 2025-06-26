@@ -461,23 +461,27 @@ def take_exam(exam_id):
     if request.method == 'POST':
         total_score = 0
         total_possible_score = sum(q.score for q in questions)
-
+        # 记录学生答案
+        student_answers = {}
         for question in questions:
             user_answer = request.form.get(f'question_{question.id}')
+            student_answers[str(question.id)] = user_answer
             if user_answer == question.correct_answer:
                 total_score += question.score
 
-        # 保存考试结果
+        # 保存考试结果，包含学生答案
         result = ExamResult(
             user_id=current_user.id,
             exam_id=exam_id,
             score=total_score,
-            total_possible_score=total_possible_score
+            total_possible_score=total_possible_score,
+            answer_json=json.dumps(student_answers)
         )
         db.session.add(result)
         db.session.commit()
 
         flash('考试已提交，感谢参与！')
+        # 修正：使用 exam_result 作为 endpoint
         return redirect(url_for('exam_result', result_id=result.id))
 
     return render_template('take_exam.html', exam=exam, questions=questions)
