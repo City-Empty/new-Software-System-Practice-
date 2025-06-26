@@ -4,275 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}EduHub - 在线教育平台{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        /* 基础样式 */
-        :root {
-            --primary-color: #165DFF;
-            --secondary-color: #36D399;
-            --danger-color: #F87272;
-            --warning-color: #FBBD23;
-            --info-color: #3ABFF8;
-            --light-color: #F8FAFC;
-            --dark-color: #1E293B;
-        }
-        body {
-            font-family: 'Inter', 'Microsoft YaHei', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #F1F5F9;
-            color: var(--dark-color);
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            background-color: white;
-            padding: 15px 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-        .logo {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-        }
-        .logo i {
-            margin-right: 10px;
-        }
-        .nav-links {
-            display: flex;
-            align-items: center;
-        }
-        .nav-links a {
-            margin-left: 25px;
-            color: #475569;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        .nav-links a:hover {
-            background-color: #ECF2FF;
-            color: var(--primary-color);
-        }
-        .nav-links .active {
-            background-color: #ECF2FF;
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-        .content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-        .flash {
-            padding: 12px 18px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
-        .flash-success {
-            background-color: #ECFDF5;
-            color: #065F46;
-            border-left: 4px solid #10B981;
-        }
-        .flash-error {
-            background-color: #FEF2F2;
-            color: #B91C1C;
-            border-left: 4px solid #EF4444;
-        }
-        .flash i {
-            margin-right: 10px;
-        }
-        h1, h2, h3, h4 {
-            font-size: 32px;
-        }
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #D1D5DB;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-        .form-control:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.15);
-        }
-        .card {
-            background-color: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .card-header {
-            padding: 20px 30px;
-            border-bottom: 1px solid #E2E8F0;
-        }
-        .card-body {
-            padding: 30px;
-        }
-        .course-card {
-            display: inline-block;
-            width: 300px;
-            margin: 0 15px 25px 0;
-            vertical-align: top;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .course-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .course-thumbnail {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-        }
-        .course-info {
-            padding: 20px;
-        }
-        .course-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--dark-color);
-        }
-        .course-desc {
-            color: #64748B;
-            font-size: 0.95rem;
-            margin-bottom: 15px;
-            line-height: 1.6;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .course-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: #94A3B8;
-            margin-bottom: 15px;
-        }
-        .course-meta span {
-            display: flex;
-            align-items: center;
-        }
-        .course-meta i {
-            margin-right: 5px;
-        }
-        .question {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #E2E8F0;
-        }
-        .options {
-            margin-top: 15px;
-        }
-        .options label {
-            display: block;
-            margin-bottom: 12px;
-            font-size: 1rem;
-            color: #334155;
-        }
-        .options input[type="radio"] {
-            margin-right: 10px;
-        }
-        .pagination a {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            margin: 0 5px;
-            color: #475569;
-            text-decoration: none;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-        .pagination a:hover, .pagination a.active {
-            background-color: #ECF2FF;
-            color: var(--primary-color);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-        }
-        @media (max-width: 768px) {
-            .container { padding: 15px; }
-            .header { padding: 12px 20px; }
-            .nav-links a { margin-left: 15px; padding: 6px 12px; font-size: 0.9rem; }
-            .content { padding: 20px; }
-            h1 { font-size: 2rem; }
-            h2 { font-size: 1.5rem; }
-            h3 { font-size: 1.25rem; }
-            .course-card { width: 100%; margin-right: 0; }
-            .nav-links { flex-wrap: wrap; margin-top: 10px; }
-            .nav-links a { margin: 5px 10px; }
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">
-                <i class="fa fa-graduation-cap"></i>
-                EduHub
-            </div>
-            <div class="nav-links">
-    {% if current_user.is_authenticated %}
-        <a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>首页</a>
-        <a href="{{ url_for('course_forum') }}" {% if request.endpoint == 'course_forum' %}class="active"{% endif %}>论坛</a>
-        {% if current_user.role == 'teacher' %}
-            <a href="{{ url_for('teacher_dashboard') }}" {% if request.endpoint.startswith('teacher_') %}class="active"{% endif %}>教师中心</a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+      <i class="fa fa-graduation-cap"></i> EduHub
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        {% if current_user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">首页</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'course_forum' %}active{% endif %}" href="{{ url_for('course_forum') }}">论坛</a>
+          </li>
+          {% if current_user.role == 'teacher' %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint.startswith('teacher_') %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">教师中心</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint.startswith('student_') %}active{% endif %}" href="{{ url_for('student_courses') }}">我的课程</a>
+            </li>
+          {% endif %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('logout') }}">退出</a>
+          </li>
         {% else %}
-            <a href="{{ url_for('student_courses') }}" {% if request.endpoint.startswith('student_') %}class="active"{% endif %}>我的课程</a>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">登录</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">注册</a>
+          </li>
         {% endif %}
-        <a href="{{ url_for('logout') }}">退出</a>
-    {% else %}
-        <a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}class="active"{% endif %}>登录</a>
-        <a href="{{ url_for('register') }}" {% if request.endpoint == 'register' %}class="active"{% endif %}>注册</a>
-    {% endif %}
-</div>
-       </div>
-
-      <!--{% with messages = get_flashed_messages(with_categories=true) %}
-           {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">
-                        <i class="fa fa-info-circle"></i>
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-          {% endwith %}-->
-
-        {% block content %}
-        {% endblock %}
+      </ul>
     </div>
+  </div>
+</nav>
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

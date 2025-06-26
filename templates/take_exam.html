@@ -1,65 +1,32 @@
-<!-- templates/take_exam.html -->
 {% extends "base.html" %}
-{% block title %}参加考试 - {{ exam.title }}{% endblock %}
+{% block title %}{{ exam.title }} - 在线考试{% endblock %}
 {% block content %}
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6">{{ exam.title }}</h1>
-        <p class="text-gray-600 mb-6">考试时长: {{ exam.duration }} 分钟</p>
-
-        <form method="POST" action="{{ url_for('take_exam', exam_id=exam.id) }}">
-            <div class="space-y-8 mb-8">
-                {% for question in questions %}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="font-semibold text-lg mb-4">
-                        {{ loop.index }}. {{ question.question_text }}
-                        <span class="text-gray-500 text-sm ml-2">({{ question.score }} 分)</span>
-                    </h3>
-                    {% if question.image %}
-                        <div class="mb-4">
-                            <img src="{{ url_for('static', filename=question.image.replace('uploads/', '')) }}" alt="题目图片" style="max-width:300px;">
-                        </div>
-                    {% endif %}
-                    <div class="space-y-2">
-                        {% if question.question_type == 'single' %}
-                            {% for opt in ['A','B','C','D'] %}
-                                {% if question.options[opt] %}
-                                <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
-                                    <input type="radio" name="question_{{ question.id }}" value="{{ opt }}" class="form-radio h-4 w-4 text-blue-500">
-                                    <span class="ml-2">{{ opt }}. {{ question.options[opt] }}</span>
-                                </label>
-                                {% endif %}
-                            {% endfor %}
-                        {% elif question.question_type == 'multiple' %}
-                            {% for opt in ['A','B','C','D'] %}
-                                {% if question.options[opt] %}
-                                <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
-                                    <input type="checkbox" name="question_{{ question.id }}" value="{{ opt }}" class="form-checkbox h-4 w-4 text-blue-500">
-                                    <span class="ml-2">{{ opt }}. {{ question.options[opt] }}</span>
-                                </label>
-                                {% endif %}
-                            {% endfor %}
-                        {% elif question.question_type == 'blank' %}
-                            <input type="text" name="question_{{ question.id }}" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请填写答案">
-                        {% elif question.question_type == 'short' %}
-                            <textarea name="question_{{ question.id }}" class="form-textarea w-full px-4 py-2 border border-gray-300 rounded-md" rows="3" placeholder="请作答"></textarea>
-                        {% elif question.question_type == 'judge' %}
-                            <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
-                                <input type="radio" name="question_{{ question.id }}" value="A" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">正确</span>
-                            </label>
-                            <label class="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
-                                <input type="radio" name="question_{{ question.id }}" value="B" class="form-radio h-4 w-4 text-blue-500">
-                                <span class="ml-2">错误</span>
-                            </label>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
+<div class="container mt-4">
+  <h3 class="mb-4">{{ exam.title }}</h3>
+  <form method="post">
+    {% for question in questions %}
+      <div class="card mb-3">
+        <div class="card-header bg-light">
+          <strong>第{{ loop.index }}题：</strong> {{ question.question_text }}
+          <span class="badge bg-secondary float-end">分值：{{ question.score }}</span>
+        </div>
+        <div class="card-body">
+          {% for key, value in question.options.items() %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio"
+                     name="question_{{ question.id }}" id="q{{ question.id }}_{{ key }}"
+                     value="{{ key }}" required>
+              <label class="form-check-label" for="q{{ question.id }}_{{ key }}">
+                {{ key }}. {{ value }}
+              </label>
             </div>
-
-            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-md transition duration-300">
-                提交考试
-            </button>
-        </form>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+    <div class="text-center my-4">
+      <button type="submit" class="btn btn-lg btn-primary px-5">提交试卷</button>
     </div>
+  </form>
+</div>
 {% endblock %}

@@ -1,36 +1,27 @@
-<!-- templates/index.html -->
-{% extends "base.html" %}
-{% block title %}EduHub - 在线教育平台{% endblock %}
+{% extends 'base.html' %}
+{% block title %}首页 - EduHub{% endblock %}
 {% block content %}
-<h1>欢迎来到EduHub</h1>
-<p>探索高质量在线课程，提升你的技能水平</p>
-<div class="grid">
-    {% for course in courses %}
-    <div class="course-card">
-        <img src="https://picsum.photos/600/338?random={{ course.id }}" alt="{{ course.title }}" class="course-thumbnail">
-        <div class="course-info">
-            <h3 class="course-title">{{ course.title }}</h3>
-            <p class="course-desc">{{ course.description }}</p>
-            <div class="course-meta">
-                <span><i class="fa fa-user"></i> 授课教师: {{ course.teacher.username }}</span>
-                <span><i class="fa fa-clock-o"></i> 课程时长</span>
-            </div>
-            {% if current_user.role == 'student' %}
-            <a href="{{ url_for('enroll_course', course_id=course.id) }}" class="btn">选课学习</a>
-            {% else %}
-            <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn">查看详情</a>
-            {% endif %}
-        </div>
+<div class="row">
+{% for course in courses %}
+  <div class="col-md-6 mb-4">
+    <div class="card h-100 shadow-sm">
+      <img class="card-img-top"
+           src="{{ url_for('static', filename='covers/' ~ course.cover_image) if course.cover_image else url_for('static', filename='default_course.jpg') }}"
+           style="height:180px;object-fit:cover;">
+      <div class="card-body">
+        <h5 class="card-title">{{ course.title }}</h5>
+        <p class="card-text text-truncate">{{ course.description }}</p>
+      </div>
+      <div class="card-footer bg-white border-0">
+        <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-primary btn-sm">进入课程</a>
+        {% if current_user.is_authenticated and current_user.role == 'student' and course not in current_user.enrolled_courses %}
+          <a href="{{ url_for('enroll_course', course_id=course.id) }}" class="btn btn-success btn-sm ml-2">选课</a>
+        {% endif %}
+      </div>
     </div>
-    {% else %}
-    <div class="card">
-        <div class="card-body">
-            <p>暂无课程，请等待教师上传</p>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-<div class="text-center mt-8">
-    <a href="#" class="btn-outline">查看全部课程</a>
-</div>
+  </div>
+{% endfor %}
 {% endblock %}
+```
+
+这样首页每行就会显示两个课程视频卡片，无需分页。
