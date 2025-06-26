@@ -6,7 +6,9 @@
 <h2>用户注册</h2>
 <p>创建你的EduHub账号</p>
 
-<form method="POST" action="{{ url_for('register') }}">
+
+<div class="form-container">
+  <form method="POST" action="{{ url_for('register') }}">
     <div class="form-group">
         <label for="username">用户名</label>
         <input type="text" id="username" name="username" class="form-control" required placeholder="请设置用户名">
@@ -25,7 +27,8 @@
     <div class="form-group">
         <button type="submit" class="btn">注册账号</button>
     </div>
-</form>
+  </form>
+</div>
 
 <div class="mt-6">
     <p>已有账号？<a href="{{ url_for('login') }}">马上登录</a></p>
