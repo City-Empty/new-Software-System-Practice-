@@ -38,3 +38,60 @@
     font-size: 15px;
     box-sizing: border-box;
 }
+/*以上是登录和注册页面*/
+
+
+/* 论坛主容器 */
+.forum-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 32px 24px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+/* 帖子列表 */
+.forum-post {
+    border-bottom: 1px solid #eee;
+    padding: 16px 0;
+}
+.forum-post:last-child {
+    border-bottom: none;
+}
+
+/* 帖子标题 */
+.forum-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+/* 帖子内容 */
+.forum-content {
+    font-size: 16px;
+    color: #444;
+    margin-bottom: 8px;
+}
+
+/* 回复区 */
+.forum-replies {
+    margin-left: 24px;
+    background: #f8f8f8;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 8px;
+}
+.forum-reply {
+    border-bottom: 1px dashed #ddd;
+    padding: 6px 0;
+    font-size: 15px;
+}
+.forum-reply:last-child {
+    border-bottom: none;
+}
+
+/* 发帖表单 */
+.forum-form {
+    margin-bottom: 32px;
+}
