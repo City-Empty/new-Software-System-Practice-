@@ -2,6 +2,14 @@
 
 {% block title %}登录 - EduHub{% endblock %}
 
+{% block head %}
+<style>
+  body {
+    background: url("{{ url_for('static', filename='images/login_bg.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+  }
+</style>
+{% endblock %}
 {% block content %}
 <h2>用户登录</h2>
 <p>请输入账号密码登录系统</p>
