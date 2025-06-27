@@ -8,7 +8,7 @@ from datetime import timedelta
 from db import db  # 从独立文件导入数据库实例
 from models import User, Course, Exam, Question, ExamResult, LearningProgress, ForumPost, ForumReply  # 导入模型类
 from flask_migrate import Migrate  # 用于数据库迁移
-from werkzeug.utils import send_from_directory
+from flask import  send_from_directory, request
 from sqlalchemy import JSON
 import json
 
@@ -59,7 +59,7 @@ def play_video(filename):
         return send_from_directory(
             app.config['UPLOAD_FOLDER'],
             filename,
-            as_attachment=False
+            environ=request.environ
         )
     except FileNotFoundError:
         flash("视频文件不存在")
