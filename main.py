@@ -351,24 +351,53 @@ def add_question(exam_id):
     exam = Exam.query.get_or_404(exam_id)
     if request.method == 'POST':
         question_text = request.form['question_text']
-        option_a = request.form['option_a']
-        option_b = request.form['option_b']
-        option_c = request.form['option_c']
-        option_d = request.form['option_d']
-        correct_answer = request.form['correct_answer']
+        question_type = request.form.get('question_type', 'single')
         score = int(request.form.get('score', 1))
-        options = {
-            'A': option_a,
-            'B': option_b,
-            'C': option_c,
-            'D': option_d
-        }
+        explanation = request.form.get('explanation', '')
+
+        options = None
+        correct_answer = None
+
+        if question_type == 'single':
+            # 单选题
+            options = {
+                'A': request.form.get('option_a', ''),
+                'B': request.form.get('option_b', ''),
+                'C': request.form.get('option_c', ''),
+                'D': request.form.get('option_d', '')
+            }
+            correct_answer = request.form.get('correct_answer', 'A')
+        elif question_type == 'multiple':
+            # 多选题
+            options = {
+                'A': request.form.get('option_a', ''),
+                'B': request.form.get('option_b', ''),
+                'C': request.form.get('option_c', ''),
+                'D': request.form.get('option_d', '')
+            }
+            # 多选答案为多个checkbox，需拼接
+            correct_answer_list = request.form.getlist('correct_answer_multi')
+            correct_answer = ','.join(sorted(correct_answer_list))
+        elif question_type == 'blank':
+            # 填空题
+            correct_answer = request.form.get('blank_answer', '')
+        elif question_type == 'short':
+            # 简答题
+            correct_answer = request.form.get('short_answer', '')
+        elif question_type == 'judge':
+            # 判断题
+            # 前端radio value为A/B，转为True/False
+            judge_val = request.form.get('judge_answer', 'A')
+            correct_answer = 'True' if judge_val == 'A' else 'False'
+
         new_question = Question(
             exam_id=exam_id,
             question_text=question_text,
             options=options,
             correct_answer=correct_answer,
-            score=score
+            score=score,
+            explanation=explanation,
+            question_type=question_type
         )
         db.session.add(new_question)
         db.session.commit()
@@ -660,7 +689,7 @@ def student_exams():
         results_map[(result.exam_id, current_user.id)] = result
     return render_template('student_exams.html', courses=courses, results_map=results_map)
 
-@app.route('/student/course/enroll/<int:course_id>', methods=['GET'])
+@app.route('/student/course/enroll/<int:course_id>', methods=['POST'])
 @login_required
 def enroll_course(course_id):
     if current_user.role != 'student':
