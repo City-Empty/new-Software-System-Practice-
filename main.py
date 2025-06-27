@@ -659,10 +659,39 @@ def take_exam(exam_id):
         db.session.add(result)
         db.session.commit()
 
+        update_learning_progress(current_user.id, exam.course_id)
+
         flash('考试已提交，感谢参与！')
         return redirect(url_for('exam_result', result_id=result.id))
 
     return render_template('take_exam.html', exam=exam, questions=questions)
+
+#进度更新逻辑
+def update_learning_progress(user_id, course_id):
+    progress = LearningProgress.query.filter_by(user_id=user_id, course_id=course_id).first()
+    if not progress:
+        progress = LearningProgress(user_id=user_id, course_id=course_id)
+        db.session.add(progress)
+
+    # 保持视频进度不变
+    video_percent = progress.video_watched_percentage or 0
+
+    exams = Exam.query.filter_by(course_id=course_id).all()
+    exam_ids = [exam.id for exam in exams]
+    exam_results = ExamResult.query.filter(
+        ExamResult.user_id == user_id,
+        ExamResult.exam_id.in_(exam_ids)
+    ).all()
+    finished_exam_ids = {result.exam_id for result in exam_results}
+
+    exam_count = len(exams)
+    exam_completion_score = sum(1 for exam in exams if exam.id in finished_exam_ids)
+    exam_percent = (exam_completion_score / exam_count) * 100 if exam_count else 0
+
+    progress.exam_completed = (exam_completion_score == exam_count and exam_count > 0)
+    progress.progress_percentage = (video_percent * 0.5) + (exam_percent * 0.5)
+    progress.updated_at = datetime.datetime.utcnow()
+    db.session.commit()
 
 
 # 学生考试结果
@@ -810,27 +839,24 @@ def teacher_view_student_progress(student_id):
     if student not in course.students:
         abort(403)
     progress = LearningProgress.query.filter_by(user_id=student_id, course_id=course_id).first()
-    # 新增：构建进度数据，保证模板字段完整
-    if progress:
-        video_watched_percentage = progress.video_watched_percentage or 0
-        exam_completed = progress.exam_completed
-        progress_percentage = progress.progress_percentage or 0
-        updated_at = progress.updated_at
-    else:
-        video_watched_percentage = 0
-        exam_completed = False
-        progress_percentage = 0
-        updated_at = None
-    # 传递详细进度数据给模板
+    # 获取已完成考试ID
+    exams = Exam.query.filter_by(course_id=course_id).all()
+    exam_ids = [exam.id for exam in exams]
+    exam_results = ExamResult.query.filter(
+        ExamResult.user_id == student_id,
+        ExamResult.exam_id.in_(exam_ids)
+    ).all()
+    finished_exam_ids = {result.exam_id for result in exam_results}
     return render_template(
         'student_learning_progress.html',
         student=student,
         course=course,
         progress=progress,
-        video_watched_percentage=video_watched_percentage,
-        exam_completed=exam_completed,
-        progress_percentage=progress_percentage,
-        updated_at=updated_at
+        finished_exam_ids=finished_exam_ids,
+        video_watched_percentage=progress.video_watched_percentage if progress else 0,
+        exam_completed=progress.exam_completed if progress else False,
+        progress_percentage=progress.progress_percentage if progress else 0,
+        updated_at=progress.updated_at if progress else None
     )
 
 
@@ -991,6 +1017,55 @@ def grade_subjective(exam_id):
         flash('批改结果已保存', 'success')
         return redirect(url_for('grade_subjective', exam_id=exam_id))
     return render_template('grade_subjective.html', exam=exam, questions=questions, results=results)
+
+
+#更新学习进度
+@app.route('/api/update_progress', methods=['POST'])
+@login_required
+def api_update_progress():
+    data = request.get_json()
+    course_id = data.get('course_id')
+    video_percent = data.get('video_percent')
+    if course_id is None or video_percent is None:
+        return jsonify({'error': '参数缺失'}), 400
+
+    progress = LearningProgress.query.filter_by(user_id=current_user.id, course_id=course_id).first()
+    if not progress:
+        progress = LearningProgress(user_id=current_user.id, course_id=course_id)
+        db.session.add(progress)
+
+    progress.video_watched_percentage = max(progress.video_watched_percentage or 0, video_percent)
+
+    exams = Exam.query.filter_by(course_id=course_id).all()
+    exam_ids = [exam.id for exam in exams]
+    exam_results = ExamResult.query.filter(
+        ExamResult.user_id == current_user.id,
+        ExamResult.exam_id.in_(exam_ids)
+    ).all()
+    finished_exam_ids = {result.exam_id for result in exam_results}
+
+    # 平均分配每个考试的进度
+    exam_count = len(exams)
+    exam_completion_score = 0
+    for exam in exams:
+        exam_completion_score += 1 if exam.id in finished_exam_ids else 0
+    exam_percent = (exam_completion_score / exam_count) * 100 if exam_count else 0
+
+    # 所有考试完成才标记为已完成
+    progress.exam_completed = (exam_completion_score == exam_count and exam_count > 0)
+    progress.progress_percentage = (progress.video_watched_percentage * 0.5) + (exam_percent * 0.5)
+    progress.updated_at = datetime.datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+@app.route('/debug/progress/<int:user_id>/<int:course_id>')
+def debug_progress(user_id, course_id):
+    progress = LearningProgress.query.filter_by(user_id=user_id, course_id=course_id).first()
+    if progress:
+        return f"学习进度记录: {progress.video_watched_percentage}%"
+    else:
+        return "没有找到学习进度记录"
 
 if __name__ == '__main__':
     with app.app_context():

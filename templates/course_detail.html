@@ -7,10 +7,29 @@
         <!-- 视频播放区域 -->
         <div class="video-container">
             {% if course.video_filename %}
-            <video width="100%" controls poster="https://picsum.photos/800/450?random={{ course.id }}">
+            <video id="myVideo" width="100%" controls poster="https://picsum.photos/800/450?random={{ course.id }}">
                 <source src="{{ url_for('play_video', filename=course.video_filename) }}" type="video/mp4">
                 你的浏览器不支持视频播放，请升级浏览器或安装插件
             </video>
+            <script>
+            const video = document.getElementById('myVideo');
+            video.lastPercent = 0;
+            video.addEventListener('timeupdate', function() {
+                if (!video.duration) return;
+                const percent = Math.floor((video.currentTime / video.duration) * 100);
+                if (percent - video.lastPercent >= 5 || percent === 100) {
+                    video.lastPercent = percent;
+                    fetch('/api/update_progress', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            course_id: {{ course.id }},
+                            video_percent: percent
+                        })
+                    });
+                }
+            });
+            </script>
             {% else %}
             <div class="p-6 text-center bg-gray-50 rounded-lg">
                 <i class="fa fa-film text-4xl text-gray-300 mb-4"></i>
