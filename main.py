@@ -57,7 +57,14 @@ def cover_image(filename):
 @app.route('/course/<int:course_id>')
 def course_detail(course_id):
     course = Course.query.get_or_404(course_id)
-    return render_template('course_detail.html', course=course)
+    # 解析资料文件名列表
+    material_files = []
+    if course.learning_materials:
+        try:
+            material_files = json.loads(course.learning_materials)
+        except Exception:
+            material_files = []
+    return render_template('course_detail.html', course=course, material_files=material_files)
 
 
 # 视频播放
@@ -172,6 +179,23 @@ def create_course():
                     new_course.cover_image = unique_cover_filename
                     db.session.commit()
 
+        # 处理多个学习资料上传及说明
+        materials_info = []
+        if 'materials' in request.files:
+            materials_files = request.files.getlist('materials')
+            descs = request.form.getlist('material_desc')
+            for idx, materials_file in enumerate(materials_files):
+                if materials_file and materials_file.filename != '':
+                    filename = secure_filename(materials_file.filename)
+                    unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                    file_path = os.path.join(app.config['MATERIALS_FOLDER'], unique_filename)
+                    materials_file.save(file_path)
+                    desc = descs[idx] if idx < len(descs) else ''
+                    materials_info.append({'filename': unique_filename, 'desc': desc})
+        if materials_info:
+            new_course.learning_materials = json.dumps(materials_info, ensure_ascii=False)
+            db.session.commit()
+
         flash('课程创建成功')
         return redirect(url_for('teacher_dashboard'))
     return render_template('teacher_course.html', course=None)
@@ -224,10 +248,56 @@ def edit_course(course_id):
                     cover_file.save(cover_path)
                     course.cover_image = unique_cover_filename
 
+        # 处理多个学习资料上传及说明（追加到已有资料）
+        materials_info = []
+        # 先读取已有资料
+        if course.learning_materials:
+            try:
+                materials_info = json.loads(course.learning_materials)
+            except Exception:
+                materials_info = []
+        # 处理新上传
+        if 'materials' in request.files:
+            materials_files = request.files.getlist('materials')
+            descs = request.form.getlist('material_desc')
+            for idx, materials_file in enumerate(materials_files):
+                if materials_file and materials_file.filename != '':
+                    filename = secure_filename(materials_file.filename)
+                    unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                    file_path = os.path.join(app.config['MATERIALS_FOLDER'], unique_filename)
+                    materials_file.save(file_path)
+                    desc = descs[idx] if idx < len(descs) else ''
+                    materials_info.append({'filename': unique_filename, 'desc': desc})
+        # 处理资料说明修改
+        if 'existing_desc' in request.form:
+            existing_descs = request.form.getlist('existing_desc')
+            for i, desc in enumerate(existing_descs):
+                if i < len(materials_info):
+                    materials_info[i]['desc'] = desc
+        # 处理资料删除
+        del_indices = request.form.getlist('delete_material')
+        del_indices = set(int(i) for i in del_indices)
+        new_materials_info = []
+        for idx, item in enumerate(materials_info):
+            if idx not in del_indices:
+                new_materials_info.append(item)
+            else:
+                # 删除文件
+                file_path = os.path.join(app.config['MATERIALS_FOLDER'], item['filename'])
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+        course.learning_materials = json.dumps(new_materials_info, ensure_ascii=False)
         db.session.commit()
         flash('课程更新成功')
         return redirect(url_for('teacher_dashboard'))
-    return render_template('teacher_course.html', course=course)
+    # 展示时解析资料
+    materials_info = []
+    if course.learning_materials:
+        try:
+            materials_info = json.loads(course.learning_materials)
+        except Exception:
+            materials_info = []
+    return render_template('teacher_course.html', course=course, materials_info=materials_info)
 
 
 # 上传视频

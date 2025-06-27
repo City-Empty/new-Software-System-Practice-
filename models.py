@@ -29,7 +29,7 @@ class Course(db.Model):
     upload_date = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     exams = db.relationship('Exam', backref='course', lazy=True)
-    learning_materials = db.Column(db.String(200))  # 学习材料文件名
+    learning_materials = db.Column(db.Text)  # 存储JSON字符串，包含文件名和说明
     is_ended = db.Column(db.Boolean, default=False)  # 新增：课程是否已结束
     cover_image = db.Column(db.String(200))  # 新增：课程封面图片文件名
 
