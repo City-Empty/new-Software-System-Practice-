@@ -33,7 +33,6 @@
                 </label>
               </div>
             {% endfor %}
-            <input type="hidden" name="question_{{ question.id }}_is_multiple" value="1">
           {% elif question.question_type == 'judge' %}
             <div class="form-check mb-2">
               <input class="form-check-input" type="radio"
@@ -67,20 +66,21 @@
   </form>
 </div>
 <script>
-
   // 多选题答案合并
   document.querySelector('form').addEventListener('submit', function(e) {
     {% for question in questions %}
       {% if question.question_type == 'multiple' %}
         var checkboxes = document.querySelectorAll('input[name="question_{{ question.id }}"]:checked');
-        var values = Array.from(checkboxes).map(cb => cb.value).join(',');
+        var values = Array.from(checkboxes).map(cb => cb.value.trim()).filter(v => v).sort().join(',');
+        // 先移除所有checkbox的name，避免重复
+        var allCheckboxes = document.querySelectorAll('input[name="question_{{ question.id }}"]');
+        allCheckboxes.forEach(cb => cb.removeAttribute('name'));
+        // 添加一个隐藏域用于提交合并后的答案
         var hidden = document.createElement('input');
         hidden.type = 'hidden';
         hidden.name = 'question_{{ question.id }}';
         hidden.value = values;
         this.appendChild(hidden);
-        // 取消原checkbox的name，避免重复
-        checkboxes.forEach(cb => cb.removeAttribute('name'));
       {% endif %}
     {% endfor %}
   });

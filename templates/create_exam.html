@@ -123,6 +123,10 @@ function addQuestion() {
       <label>分值</label>
       <input type="number" class="form-control" name="score_${questionIndex}" value="1" min="1" required>
     </div>
+    <div class="mb-2">
+      <label>试题解析</label>
+      <textarea class="form-control" name="explanation_${questionIndex}" rows="2"></textarea>
+    </div>
   `;
   area.appendChild(qDiv);
   showFieldsByType(qDiv.querySelector('select[name="question_type_' + questionIndex + '"]'), questionIndex);

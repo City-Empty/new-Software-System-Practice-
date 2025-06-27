@@ -406,6 +406,7 @@ def create_exam(course_id):
             score = int(request.form.get(f'score_{i}', 1))
             options = None
             correct_answer = None
+            explanation = request.form.get(f'explanation_{i}', '')
 
             if question_type in ['single', 'multiple']:
                 options = {
@@ -417,9 +418,9 @@ def create_exam(course_id):
             if question_type == 'single':
                 correct_answer = request.form.get(f'correct_answer_{i}', '')
             elif question_type == 'multiple':
-                # 多选题为多选select
                 correct_answer_list = request.form.getlist(f'correct_answer_{i}')
-                correct_answer = ','.join(sorted(correct_answer_list))
+                # 排除空字符串并排序
+                correct_answer = ','.join(sorted([x for x in correct_answer_list if x]))
             elif question_type == 'judge':
                 correct_answer = request.form.get(f'correct_answer_{i}', '')
             elif question_type == 'blank':
@@ -434,7 +435,8 @@ def create_exam(course_id):
                     options=options,
                     correct_answer=correct_answer,
                     score=score,
-                    question_type=question_type
+                    question_type=question_type,
+                    explanation=explanation
                 )
                 db.session.add(question)
 
@@ -462,6 +464,7 @@ def view_questions(exam_id):
 @app.route('/teacher/exam/<int:exam_id>/add_question', methods=['GET', 'POST'])
 @login_required
 def add_question(exam_id):
+    # 权限检查
     if current_user.role != 'teacher':
         abort(403)
     exam = Exam.query.get_or_404(exam_id)
@@ -525,15 +528,19 @@ def add_question(exam_id):
 @app.route('/teacher/exam/<int:exam_id>/question/<int:question_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_question(exam_id, question_id):
+    # 权限检查
     if current_user.role != 'teacher':
         abort(403)
     exam = Exam.query.get_or_404(exam_id)
     question = Question.query.get_or_404(question_id)
     if question.exam_id != exam.id:
         abort(400)
+    # 处理POST请求
     if request.method == 'POST':
+        # 获取题目文本内容和类型
         question.question_text = request.form['question_text']
         question.question_type = request.form.get('question_type', 'single')
+        # 题目为单选或多选
         if question.question_type in ['single', 'multiple']:
             # 选择题
             question.options = {
@@ -542,19 +549,25 @@ def edit_question(exam_id, question_id):
                 'C': request.form.get('option_c', ''),
                 'D': request.form.get('option_d', '')
             }
-            question.correct_answer = request.form.get('correct_answer')
+            if question.question_type == 'single':
+                # 单选题：从前端表单获取名为correct_answer的字段，若没有的话则默认值为A
+                question.correct_answer = request.form.get('correct_answer', 'A')
+            else:
+                # 多选题
+                correct_answer_list = request.form.getlist('correct_answer')
+                question.correct_answer = ','.join(sorted(correct_answer_list))
         elif question.question_type == 'judge':
             # 判断题
             question.options = None
-            question.correct_answer = request.form.get('correct_answer')
+            question.correct_answer = request.form.get('correct_answer', 'True')
         elif question.question_type == 'blank':
             # 填空题
             question.options = None
-            question.correct_answer = request.form.get('correct_answer')
+            question.correct_answer = request.form.get('correct_answer', '')
         elif question.question_type == 'short':
             # 简答题
             question.options = None
-            question.correct_answer = request.form.get('correct_answer')
+            question.correct_answer = request.form.get('correct_answer', '')
         question.score = int(request.form.get('score', 1))
         question.explanation = request.form.get('explanation')
         db.session.commit()
@@ -690,28 +703,36 @@ def take_exam(exam_id):
         # 记录学生答案
         student_answers = {}
         for question in questions:
+            qid = str(question.id)
+            user_answer = ''
             if question.question_type == 'multiple':
-                # 多选题答案为逗号分隔字符串
-                user_answer = request.form.get(f'question_{question.id}', '')
-                # 统一格式：去除多余逗号和空格
-                user_answer = ','.join(sorted([ans for ans in user_answer.split(',') if ans]))
+                # 获取所有选中的checkbox，前端已合并为逗号分隔字符串
+                user_answer_raw = request.form.get(f'question_{qid}', '')
+                # 只保留A/B/C/D等有效选项
+                user_answer = ','.join(sorted([ans.strip() for ans in user_answer_raw.split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
+            elif question.question_type == 'judge':
+                user_answer = request.form.get(f'question_{qid}', '').strip()
+                if user_answer == 'True':
+                    user_answer = 'True'
+                elif user_answer == 'False':
+                    user_answer = 'False'
             else:
-                user_answer = request.form.get(f'question_{question.id}')
-            student_answers[str(question.id)] = user_answer
+                user_answer = request.form.get(f'question_{qid}', '').strip()
+            student_answers[qid] = user_answer
+
             # 判分
             if question.question_type == 'multiple':
-                # 多选题：答案完全一致才得分
-                if user_answer == question.correct_answer:
+                correct = ','.join(sorted([ans.strip() for ans in question.correct_answer.split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
+                if user_answer == correct:
                     total_score += question.score
             elif question.question_type == 'judge':
                 if user_answer == question.correct_answer:
                     total_score += question.score
             elif question.question_type == 'blank':
-                if user_answer == question.correct_answer:
+                if user_answer.strip().lower() == (question.correct_answer or '').strip().lower():
                     total_score += question.score
             elif question.question_type == 'short':
-                # 简答题不自动判分
-                pass
+                pass  # 简答题不自动判分
             else:
                 if user_answer == question.correct_answer:
                     total_score += question.score
@@ -722,7 +743,7 @@ def take_exam(exam_id):
             exam_id=exam_id,
             score=total_score,
             total_possible_score=total_possible_score,
-            answer_json=json.dumps(student_answers)
+            answer_json=json.dumps(student_answers, ensure_ascii=False)
         )
         db.session.add(result)
         db.session.commit()
@@ -758,13 +779,26 @@ def exam_result(result_id):
     else:
         student_answers = {}
 
+    # 处理答案显示格式
+    def format_answer(ans, qtype):
+        if ans is None:
+            return ''
+        if qtype == 'multiple':
+            # 只显示非空选项，逗号分隔
+            return ','.join([x for x in ans.split(',') if x.strip()])
+        elif qtype == 'judge':
+            return '正确' if ans == 'True' else '错误'
+        else:
+            return ans
+
     return render_template(
         'exam_result.html',
         result=result,
         exam=exam,
         questions=questions,
         total_score=result.total_possible_score,
-        student_answers=student_answers
+        student_answers=student_answers,
+        format_answer=format_answer
     )
 
 
