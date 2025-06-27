@@ -402,28 +402,39 @@ def create_exam(course_id):
         question_count = int(request.form.get('question_count', 0))
         for i in range(1, question_count + 1):
             question_text = request.form.get(f'question_{i}')
-            option_a = request.form.get(f'option_a_{i}')
-            option_b = request.form.get(f'option_b_{i}')
-            option_c = request.form.get(f'option_c_{i}')
-            option_d = request.form.get(f'option_d_{i}')
-            correct_answer = request.form.get(f'correct_answer_{i}')
-            score = int(request.form.get(f'score_{i}', 1))  # 默认1分
+            question_type = request.form.get(f'question_type_{i}', 'single')
+            score = int(request.form.get(f'score_{i}', 1))
+            options = None
+            correct_answer = None
 
-            if question_text and option_a and option_b and option_c and option_d and correct_answer:
-                # 构建选项JSON
+            if question_type in ['single', 'multiple']:
                 options = {
-                    'A': option_a,
-                    'B': option_b,
-                    'C': option_c,
-                    'D': option_d
+                    'A': request.form.get(f'option_a_{i}', ''),
+                    'B': request.form.get(f'option_b_{i}', ''),
+                    'C': request.form.get(f'option_c_{i}', ''),
+                    'D': request.form.get(f'option_d_{i}', '')
                 }
+            if question_type == 'single':
+                correct_answer = request.form.get(f'correct_answer_{i}', '')
+            elif question_type == 'multiple':
+                # 多选题为多选select
+                correct_answer_list = request.form.getlist(f'correct_answer_{i}')
+                correct_answer = ','.join(sorted(correct_answer_list))
+            elif question_type == 'judge':
+                correct_answer = request.form.get(f'correct_answer_{i}', '')
+            elif question_type == 'blank':
+                correct_answer = request.form.get(f'correct_answer_{i}', '')
+            elif question_type == 'short':
+                correct_answer = request.form.get(f'correct_answer_{i}', '')
 
+            if question_text and (options or question_type in ['judge', 'blank', 'short']) and correct_answer is not None:
                 question = Question(
                     exam_id=new_exam.id,
                     question_text=question_text,
                     options=options,
                     correct_answer=correct_answer,
-                    score=score
+                    score=score,
+                    question_type=question_type
                 )
                 db.session.add(question)
 
