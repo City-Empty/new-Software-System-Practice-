@@ -948,6 +948,41 @@ def delete_exam(exam_id):
     flash('考试已删除')
     return redirect(url_for('teacher_course_exams', course_id=course.id))
 
+@app.route('/grade_subjective/<int:exam_id>', methods=['GET', 'POST'])
+@login_required
+def grade_subjective(exam_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    exam = Exam.query.get_or_404(exam_id)
+    # 只允许本教师批改自己课程的考试
+    if exam.course.teacher_id != current_user.id:
+        abort(403)
+    # 只筛选主观题（假设类型为'short'或'blank'为主观题，根据你的模型调整）
+    questions = [q for q in exam.questions if q.question_type in ('short', 'blank')]
+    results = ExamResult.query.filter_by(exam_id=exam_id).all()
+    # 解析学生答案
+    for result in results:
+        try:
+            result.parsed_answers = json.loads(result.answer_json) if result.answer_json else {}
+        except Exception:
+            result.parsed_answers = {}
+    if request.method == 'POST':
+        for result in results:
+            subjective_score = 0
+            for q in questions:
+                score_key = f'score_{q.id}_{result.id}'
+                score_val = request.form.get(score_key)
+                if score_val:
+                    try:
+                        score = float(score_val)
+                    except ValueError:
+                        score = 0
+                    subjective_score += score
+            result.subjective_score = subjective_score
+            db.session.commit()
+        flash('批改结果已保存', 'success')
+        return redirect(url_for('grade_subjective', exam_id=exam_id))
+    return render_template('grade_subjective.html', exam=exam, questions=questions, results=results)
 
 if __name__ == '__main__':
     with app.app_context():
