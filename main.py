@@ -12,6 +12,7 @@ from flask import  send_from_directory, request
 from sqlalchemy import JSON
 import json
 from sqlalchemy.exc import IntegrityError
+from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'eduhub-secret-key'
@@ -39,6 +40,20 @@ migrate = Migrate(app, db)  # 数据库迁移初始化
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+# 新增：学生端课程访问权限检查装饰器
+def student_course_active_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        course_id = kwargs.get('course_id')
+        if course_id:
+            course = Course.query.get(course_id)
+            if course and course.is_ended:
+                flash('课程已结束，无法继续学习。')
+                return redirect(url_for('student_courses'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 # 首页
@@ -69,7 +84,15 @@ def course_detail(course_id):
 
 # 视频播放
 @app.route('/video/<path:filename>')
+@login_required
 def play_video(filename):
+    # 限制学生访问已结束课程的视频
+    if current_user.role == 'student':
+        # 通过视频文件名反查课程
+        course = Course.query.filter_by(video_filename=filename).first()
+        if course and course.is_ended:
+            flash('课程已结束，无法观看视频。')
+            return redirect(url_for('student_courses'))
     try:
         return send_from_directory(
             app.config['UPLOAD_FOLDER'],
@@ -360,7 +383,26 @@ def upload_materials(course_id):
 
 # 下载学习材料
 @app.route('/materials/<path:filename>')
+@login_required
 def download_materials(filename):
+    if current_user.role == 'student':
+        # 通过材料文件名反查课程
+        courses = Course.query.all()
+        for course in courses:
+            if course.learning_materials:
+                try:
+                    materials = json.loads(course.learning_materials)
+                    if isinstance(materials, list):
+                        if any(item['filename'] == filename for item in materials):
+                            if course.is_ended:
+                                flash('课程已结束，无法下载材料。')
+                                return redirect(url_for('student_courses'))
+                    elif isinstance(materials, str):
+                        if materials == filename and course.is_ended:
+                            flash('课程已结束，无法下载材料。')
+                            return redirect(url_for('student_courses'))
+                except Exception:
+                    continue
     return send_from_directory(app.config['MATERIALS_FOLDER'], filename, as_attachment=True)
 
 
@@ -592,6 +634,7 @@ def edit_question(exam_id, question_id):
             # 简答题
             question.options = None
             question.correct_answer = request.form.get('correct_answer', '')
+
         question.score = int(request.form.get('score', 1))
         question.explanation = request.form.get('explanation')
 
@@ -711,6 +754,11 @@ def take_exam(exam_id):
         abort(403)
 
     exam = Exam.query.get_or_404(exam_id)
+    course = exam.course
+    if course.is_ended:
+        flash('课程已结束，无法参加考试。')
+        return redirect(url_for('student_courses'))
+
     questions = Question.query.filter_by(exam_id=exam_id).all()
 
     # 检查 options 是否为 None，若为 None 则赋予空字典
@@ -1058,6 +1106,7 @@ def end_course(course_id):
 # 多门考试结果查询
 @app.route('/student/course/<int:course_id>/exam_select')
 @login_required
+@student_course_active_required
 def student_exam_select(course_id):
     if current_user.role != 'student':
         abort(403)
@@ -1073,6 +1122,7 @@ def student_exam_select(course_id):
 # 学生选择考试参加
 @app.route('/student/course/<int:course_id>/exam_take_select')
 @login_required
+@student_course_active_required
 def student_exam_take_select(course_id):
     if current_user.role != 'student':
         abort(403)
