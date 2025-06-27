@@ -631,33 +631,6 @@ def delete_question(exam_id, question_id):
     flash('试题已删除')
     return redirect(url_for('view_questions', exam_id=exam_id))
 
-#批改主观题(新增)
-@app.route('/teacher/exam/<int:exam_id>/grade_subjective', methods=['GET', 'POST'])
-@login_required
-def grade_subjective(exam_id):
-    if current_user.role != 'teacher':
-        abort(403)
-
-    exam = Exam.query.get_or_404(exam_id)
-    results = ExamResult.query.filter_by(exam_id=exam_id).all()
-    questions = Question.query.filter_by(exam_id=exam_id).filter(Question.question_type.in_(['blank', 'short'])).all()
-
-    if request.method == 'POST':
-        for result in results:
-            student_answers = json.loads(result.answer_json)
-            subjective_score = 0
-            for question in questions:
-                question_id = str(question.id)
-                if question_id in student_answers:
-                    score_key = f'score_{question_id}_{result.id}'
-                    score = float(request.form.get(score_key, 0))
-                    subjective_score += score
-            result.subjective_score = subjective_score
-            result.score = result.score + subjective_score  # 更新总分
-        db.session.commit()
-        flash('主观题批改已保存。')
-        return redirect(url_for('teacher_all_exams'))
-    return render_template('grade_subjective.html', exam=exam, results=results, questions=questions)
 
 # 查看学生数
 @app.route('/teacher/course/<int:course_id>/view_student_data')
