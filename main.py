@@ -339,6 +339,18 @@ def create_exam(course_id):
             correct_answer = request.form.get(f'correct_answer_{i}')
             score = int(request.form.get(f'score_{i}', 1))  # 默认1分
 
+            # 处理图片上传
+            image_filename = None
+            image_field = f'image_{i}'
+            if image_field in request.files:
+                image_file = request.files[image_field]
+                if image_file and image_file.filename != '' and allowed_image(image_file.filename):
+                    filename = secure_filename(image_file.filename)
+                    unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                    image_path = os.path.join(app.config['COVER_FOLDER'], unique_filename)
+                    image_file.save(image_path)
+                    image_filename = unique_filename
+
             if question_text and option_a and option_b and option_c and option_d and correct_answer:
                 # 构建选项JSON
                 options = {
@@ -353,7 +365,8 @@ def create_exam(course_id):
                     question_text=question_text,
                     options=options,
                     correct_answer=correct_answer,
-                    score=score
+                    score=score,
+                    image=image_filename  # 保存图片文件名
                 )
                 db.session.add(question)
 
@@ -362,7 +375,6 @@ def create_exam(course_id):
         return redirect(url_for('teacher_course_exams', course_id=course_id))
 
     return render_template('create_exam.html', course=course)
-
 
 # 查看试题列表
 @app.route('/teacher/exam/<int:exam_id>/questions')
@@ -393,8 +405,18 @@ def add_question(exam_id):
         options = None
         correct_answer = None
 
+        # 处理图片上传
+        image_filename = None
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename != '' and allowed_image(image_file.filename):
+                filename = secure_filename(image_file.filename)
+                unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                image_path = os.path.join(app.config['COVER_FOLDER'], unique_filename)
+                image_file.save(image_path)
+                image_filename = unique_filename
+
         if question_type == 'single':
-            # 单选题
             options = {
                 'A': request.form.get('option_a', ''),
                 'B': request.form.get('option_b', ''),
@@ -403,25 +425,19 @@ def add_question(exam_id):
             }
             correct_answer = request.form.get('correct_answer', 'A')
         elif question_type == 'multiple':
-            # 多选题
             options = {
                 'A': request.form.get('option_a', ''),
                 'B': request.form.get('option_b', ''),
                 'C': request.form.get('option_c', ''),
                 'D': request.form.get('option_d', '')
             }
-            # 多选答案为多个checkbox，需拼接
             correct_answer_list = request.form.getlist('correct_answer_multi')
             correct_answer = ','.join(sorted(correct_answer_list))
         elif question_type == 'blank':
-            # 填空题
             correct_answer = request.form.get('blank_answer', '')
         elif question_type == 'short':
-            # 简答题
             correct_answer = request.form.get('short_answer', '')
         elif question_type == 'judge':
-            # 判断题
-            # 前端radio value为A/B，转为True/False
             judge_val = request.form.get('judge_answer', 'A')
             correct_answer = 'True' if judge_val == 'A' else 'False'
 
@@ -432,14 +448,14 @@ def add_question(exam_id):
             correct_answer=correct_answer,
             score=score,
             explanation=explanation,
-            question_type=question_type
+            question_type=question_type,
+            image=image_filename  # 只在这里加
         )
         db.session.add(new_question)
         db.session.commit()
         flash('试题添加成功')
         return redirect(url_for('view_questions', exam_id=exam_id))
     return render_template('add_question.html', exam=exam, question=None)
-
 # 编辑试题
 @app.route('/teacher/exam/<int:exam_id>/question/<int:question_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -476,6 +492,22 @@ def edit_question(exam_id, question_id):
             question.correct_answer = request.form.get('correct_answer')
         question.score = int(request.form.get('score', 1))
         question.explanation = request.form.get('explanation')
+
+        # 处理图片上传
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename != '' and allowed_image(image_file.filename):
+                # 删除旧图片
+                if question.image:
+                    old_path = os.path.join(app.config['COVER_FOLDER'], question.image)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                filename = secure_filename(image_file.filename)
+                unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                image_path = os.path.join(app.config['COVER_FOLDER'], unique_filename)
+                image_file.save(image_path)
+                question.image = unique_filename
+
         db.session.commit()
         flash('试题修改成功')
         return redirect(url_for('view_questions', exam_id=exam_id))
@@ -866,8 +898,34 @@ def end_course(course_id):
     else:
         flash('课程已处于结束状态。')
     return redirect(url_for('edit_course', course_id=course.id))
+# 多门考试结果查询
+@app.route('/student/course/<int:course_id>/exam_select')
+@login_required
+def student_exam_select(course_id):
+    if current_user.role != 'student':
+        abort(403)
+    course = Course.query.get_or_404(course_id)
+    exams = Exam.query.filter_by(course_id=course_id).all()
+    # 获取当前学生所有考试结果
+    results_map = {}
+    exam_results = ExamResult.query.filter_by(user_id=current_user.id).all()
+    for result in exam_results:
+        results_map[result.exam_id] = result
+    return render_template('student_exam_select.html', course=course, exams=exams, results_map=results_map)
 
-
+# 学生选择考试参加
+@app.route('/student/course/<int:course_id>/exam_take_select')
+@login_required
+def student_exam_take_select(course_id):
+    if current_user.role != 'student':
+        abort(403)
+    course = Course.query.get_or_404(course_id)
+    exams = Exam.query.filter_by(course_id=course_id).all()
+    # 获取已参加的考试
+    taken_exam_ids = {r.exam_id for r in ExamResult.query.filter_by(user_id=current_user.id).all()}
+    # 只显示未参加的考试
+    available_exams = [exam for exam in exams if exam.id not in taken_exam_ids]
+    return render_template('student_exam_take_select.html', course=course, exams=available_exams)
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

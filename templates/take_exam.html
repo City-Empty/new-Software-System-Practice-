@@ -11,6 +11,11 @@
           <span class="badge bg-secondary float-end">分值：{{ question.score }}</span>
         </div>
         <div class="card-body">
+          {% if question.image %}
+            <div class="mb-3 text-center">
+              <img src="{{ url_for('cover_image', filename=question.image) }}" alt="题目图片" style="max-width: 300px; max-height: 200px;">
+              </div>
+              {% endif %}
           {% if question.question_type == 'single' %}
             {% for key, value in question.options.items() %}
               <div class="form-check mb-2">
