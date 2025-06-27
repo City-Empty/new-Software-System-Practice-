@@ -68,6 +68,7 @@ class ExamResult(db.Model):
     total_possible_score = db.Column(db.Float, nullable=False)
     submission_time = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     answer_json = db.Column(db.Text)  # 新增：存储学生作答
+    subjective_score = db.Column(db.Float, default=0)  # 新增：主观题批改分数
 
     # 关系
     user = db.relationship('User', backref='user_exam_result', lazy=True, overlaps="exam_results,user_exam_result")
