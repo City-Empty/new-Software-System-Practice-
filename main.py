@@ -448,7 +448,7 @@ def create_exam(course_id):
                     correct_answer=correct_answer,
                     score=score,
                     question_type=question_type,
-                    explanation=explanation
+                    explanation=explanation,
                     image=image_filename  # 保存图片文件名
                 )
                 db.session.add(question)
