@@ -38,6 +38,18 @@
             <i class="fa fa-users" style="margin-right:4px;"></i>查看学生数据
         </a>
     </div>
+    <div style="margin-top:24px;text-align:center;">
+        <form method="POST" action="{{ url_for('end_course', course_id=course.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-warning" style="margin-right:12px;" onclick="return confirm('确定要结束该课程吗？结束后学生将无法继续学习。');" {% if course.is_ended %}disabled{% endif %}>
+                {% if course.is_ended %}已结束{% else %}结束课程{% endif %}
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('delete_course', course_id=course.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除该课程吗？此操作不可恢复！');">
+                删除课程
+            </button>
+        </form>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

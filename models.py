@@ -30,6 +30,7 @@ class Course(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     exams = db.relationship('Exam', backref='course', lazy=True)
     learning_materials = db.Column(db.String(200))  # 学习材料文件名
+    is_ended = db.Column(db.Boolean, default=False)  # 新增：课程是否已结束
 
     def get_average_score(self):
         results = ExamResult.query.join(Exam).filter(Exam.course_id == self.id).all()

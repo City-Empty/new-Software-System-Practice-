@@ -11,6 +11,7 @@ from flask_migrate import Migrate  # 用于数据库迁移
 from flask import  send_from_directory, request
 from sqlalchemy import JSON
 import json
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'eduhub-secret-key'
@@ -739,6 +740,65 @@ def teacher_all_exams():
         exams.extend(course.exams)
     return render_template('teacher_all_exams.html', exams=exams)
 
+# 教师课程管理 - 删除课程
+@app.route('/teacher/course/<int:course_id>/delete', methods=['POST'])
+@login_required
+def delete_course(course_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    course = Course.query.get_or_404(course_id)
+    if course.teacher_id != current_user.id:
+        abort(403)
+    # 删除视频文件
+    if course.video_filename:
+        video_path = os.path.join(app.config['UPLOAD_FOLDER'], course.video_filename)
+        if os.path.exists(video_path):
+            os.remove(video_path)
+    # 删除学习材料
+    if course.learning_materials:
+        material_path = os.path.join(app.config['MATERIALS_FOLDER'], course.learning_materials)
+        if os.path.exists(material_path):
+            os.remove(material_path)
+    # 删除相关考试、试题、成绩、进度等
+    for exam in course.exams:
+        for question in exam.questions:
+            db.session.delete(question)
+        for result in exam.exam_results:
+            db.session.delete(result)
+        db.session.delete(exam)
+    # 删除学习进度
+    from models import LearningProgress
+    LearningProgress.query.filter_by(course_id=course.id).delete()
+    # 移除学生选课关系
+    # course.students.clear()
+    for student in course.students.all():
+        current_user.enrolled_courses.remove(course) if hasattr(current_user, 'enrolled_courses') and course in current_user.enrolled_courses else None
+        student.enrolled_courses.remove(course)
+    db.session.delete(course)
+    try:
+        db.session.commit()
+        flash('课程已删除')
+    except IntegrityError:
+        db.session.rollback()
+        flash('删除失败，存在关联数据')
+    return redirect(url_for('teacher_dashboard'))
+
+# 教师课程管理 - 结束课程
+@app.route('/teacher/course/<int:course_id>/end', methods=['POST'])
+@login_required
+def end_course(course_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    course = Course.query.get_or_404(course_id)
+    if course.teacher_id != current_user.id:
+        abort(403)
+    if not course.is_ended:
+        course.is_ended = True
+        db.session.commit()
+        flash('课程已结束，学生将无法继续学习。')
+    else:
+        flash('课程已处于结束状态。')
+    return redirect(url_for('edit_course', course_id=course.id))
 
 
 if __name__ == '__main__':
