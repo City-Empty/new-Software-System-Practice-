@@ -28,14 +28,38 @@
             {% endif %}
         </div>
         <div class="form-group" style="margin-bottom:22px;">
-            <label for="file" style="font-weight:500;">上传课程视频或学习材料</label><br>
+            <label for="file" style="font-weight:500;">上传课程视频</label><br>
             <input type="file" id="file" name="video" style="display:none;" {% if not course %}required{% endif %} onchange="document.getElementById('file-name').textContent = this.files[0]?.name || '未选择文件';">
             <label for="file" class="btn" style="display:inline-block;padding:8px 22px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-top:8px;">选择文件</label>
             <span id="file-name" class="file-name" style="margin-left:12px;color:#555;">未选择文件</span>
-            <p style="font-size:12px;color:#888;margin-top:6px;">支持视频（MP4, WebM, OGG）或文档（PDF, DOCX, PPTX等），最大1GB</p>
+            <p style="font-size:12px;color:#888;margin-top:6px;">支持视频（MP4, WebM, OGG），最大1GB</p>
             {% if course and course.video_filename %}
             <div style="margin-top:8px;">
                 <span style="font-size:13px;color:#2563eb;">已上传：{{ course.video_filename }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-group" style="margin-bottom:22px;">
+            <label for="materials" style="font-weight:500;">上传学习资料（可多选）</label><br>
+            <input type="file" id="materials" name="materials" multiple style="display:none;" onchange="showMaterialInputs(this)">
+            <label for="materials" class="btn" style="display:inline-block;padding:8px 22px;background:#f59e42;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-top:8px;">选择资料</label>
+            <span id="materials-name" class="file-name" style="margin-left:12px;color:#555;">未选择文件</span>
+            <p style="font-size:12px;color:#888;margin-top:6px;">支持PDF、图片、DOCX、PPTX等多种格式，可多选上传</p>
+            <div id="material-desc-list"></div>
+            {% if course and materials_info %}
+            <div style="margin-top:8px;">
+                <span style="font-size:13px;color:#f59e42;">已上传：</span>
+                <ul style="margin:0;padding-left:18px;">
+                    {% for item in materials_info %}
+                    <li style="font-size:13px;">
+                        <a href="{{ url_for('download_materials', filename=item.filename) }}" target="_blank">{{ item.filename }}</a>
+                        <input type="text" name="existing_desc" value="{{ item.desc }}" placeholder="资料说明" style="margin-left:8px;width:180px;font-size:12px;">
+                        <label style="margin-left:8px;">
+                            <input type="checkbox" name="delete_material" value="{{ loop.index0 }}"> 删除
+                        </label>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
             {% endif %}
         </div>
@@ -45,6 +69,23 @@
             </button>
         </div>
     </form>
+    <script>
+    function showMaterialInputs(input) {
+        let list = document.getElementById('material-desc-list');
+        let files = input.files;
+        let html = '';
+        let names = [];
+        for(let i=0;i<files.length;i++){
+            html += '<div style="margin-top:6px;font-size:13px;">'
+                + files[i].name
+                + '<input type="text" name="material_desc" placeholder="资料说明" style="margin-left:8px;width:180px;font-size:12px;">'
+                + '</div>';
+            names.push(files[i].name);
+        }
+        document.getElementById('materials-name').textContent = names.join(', ') || '未选择文件';
+        list.innerHTML = html;
+    }
+    </script>
     {% if course %}
     <div style="margin-top:18px;text-align:center;">
         <a href="{{ url_for('view_student_data', course_id=course.id) }}" style="font-size:13px;color:#666;text-decoration:underline;">

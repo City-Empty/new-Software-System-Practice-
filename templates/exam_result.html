@@ -3,57 +3,78 @@
 {% block title %}考试结果 - {{ exam.title }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">{{ exam.title }} - 考试结果</h1>
-    <div class="mb-4">
-        <span class="font-semibold">得分：</span>
-        <span class="text-green-600 text-xl">{{ result.score }} / {{ total_score }}</span>
-    </div>
-    <div class="space-y-8">
-        {% for question in questions %}
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="font-semibold text-lg mb-2">
-                {{ loop.index }}. {{ question.question_text }}
-                <span class="text-gray-500 text-sm ml-2">({{ question.score }}分)</span>
-            </h3>
-            {% if question.image %}
-                <div class="mb-2">
-                    <img src="{{ url_for('static', filename=question.image.replace('uploads/', '')) }}" alt="题目图片" style="max-width:300px;">
-                </div>
-            {% endif %}
-            <div class="mb-2">
-                <span class="font-semibold">你的作答：</span>
-                <span>
-                    {% set ans = student_answers.get(question.id|string, '') %}
-                    {% if question.question_type == 'multiple' %}
-                        {{ ans|replace(',', ', ') }}
-                    {% elif question.question_type == 'judge' %}
-                        {% if ans == 'A' %} 正确 {% elif ans == 'B' %} 错误 {% else %} {{ ans }} {% endif %}
-                    {% else %}
-                        {{ ans }}
-                    {% endif %}
-                </span>
-            </div>
-            <div class="mb-2">
-                <span class="font-semibold">正确答案：</span>
-                <span>
-                    {% if question.question_type == 'multiple' %}
-                        {{ question.correct_answer|replace(',', ', ') }}
-                    {% elif question.question_type == 'judge' %}
-                        {% if question.correct_answer == 'A' %} 正确 {% elif question.correct_answer == 'B' %} 错误 {% else %} {{ question.correct_answer }} {% endif %}
-                    {% else %}
-                        {{ question.correct_answer }}
-                    {% endif %}
-                </span>
-            </div>
-            {% if question.explanation %}
-            <div class="mb-2">
-                <span class="font-semibold">试题解析：</span>
-                <span>{{ question.explanation }}</span>
-            </div>
-            {% endif %}
-        </div>
+<div class="container mt-4">
+  <h3 class="mb-4">{{ exam.title }} - 考试结果</h3>
+  <div class="mb-3">
+    <strong>得分：</strong> {{ result.score }} / {{ total_score }}
+  </div>
+  <div class="mb-4">
+    <strong>提交时间：</strong> {{ result.submission_time.strftime('%Y-%m-%d %H:%M:%S') }}
+  </div>
+  {% for question in questions %}
+    {% set user_ans = student_answers.get(question.id|string) %}
+    {% set is_correct = false %}
+    {% if user_ans is not none %}
+      {% if question.question_type == 'multiple' %}
+        {# 过滤空项并排序后比较 #}
+        {% set correct_list = [] %}
+        {% for x in question.correct_answer.split(',') %}
+          {% set _x = x|replace(' ', '') %}
+          {% if _x %}
+            {% set correct_list = correct_list + [_x] %}
+          {% endif %}
         {% endfor %}
+        {% set user_list = [] %}
+        {% for x in user_ans.split(',') %}
+          {% set _x = x|replace(' ', '') %}
+          {% if _x %}
+            {% set user_list = user_list + [_x] %}
+          {% endif %}
+        {% endfor %}
+        {% set correct = correct_list|sort|join(',') %}
+        {% set user_val = user_list|sort|join(',') %}
+        {% if user_val == correct %}
+          {% set is_correct = true %}
+        {% endif %}
+      {% elif question.question_type == 'judge' %}
+        {% if user_ans == question.correct_answer %}
+          {% set is_correct = true %}
+        {% endif %}
+      {% elif question.question_type == 'blank' %}
+        {% if user_ans.strip().lower() == (question.correct_answer or '').strip().lower() %}
+          {% set is_correct = true %}
+        {% endif %}
+      {% elif question.question_type == 'short' %}
+        {% set is_correct = false %}
+      {% else %}
+        {% if user_ans == question.correct_answer %}
+          {% set is_correct = true %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+    <div class="card mb-3">
+      <div class="card-header bg-light">
+        <strong>第{{ loop.index }}题：</strong> {{ question.question_text }}
+        <span class="badge float-end {% if is_correct %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+          分值：{{ question.score }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div>
+          <strong>你的答案：</strong>
+          {{ format_answer(student_answers[question.id|string], question.question_type) if student_answers.get(question.id|string) else '未作答' }}
+        </div>
+        <div>
+          <strong>标准答案：</strong>
+          {{ format_answer(question.correct_answer, question.question_type) }}
+        </div>
+        {% if question.explanation %}
+        <div class="mt-2">
+          <strong>解析：</strong> {{ question.explanation }}
+        </div>
+        {% endif %}
+      </div>
     </div>
+  {% endfor %}
 </div>
 {% endblock %}
