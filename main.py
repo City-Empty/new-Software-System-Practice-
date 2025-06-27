@@ -926,6 +926,29 @@ def student_exam_take_select(course_id):
     # 只显示未参加的考试
     available_exams = [exam for exam in exams if exam.id not in taken_exam_ids]
     return render_template('student_exam_take_select.html', course=course, exams=available_exams)
+
+# 删除考试
+@app.route('/teacher/exam/<int:exam_id>/delete', methods=['POST'])
+@login_required
+def delete_exam(exam_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    exam = Exam.query.get_or_404(exam_id)
+    course = exam.course
+    # 只能删除自己课程下的考试
+    if course.teacher_id != current_user.id:
+        abort(403)
+    # 删除考试下所有试题和成绩
+    for question in exam.questions:
+        db.session.delete(question)
+    for result in exam.exam_results:
+        db.session.delete(result)
+    db.session.delete(exam)
+    db.session.commit()
+    flash('考试已删除')
+    return redirect(url_for('teacher_course_exams', course_id=course.id))
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
