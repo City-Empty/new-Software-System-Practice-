@@ -19,6 +19,8 @@
             <td class="border px-4 py-2">{{ exam.duration }}</td>
             <td class="border px-4 py-2">
                 <a href="{{ url_for('view_questions', exam_id=exam.id) }}" class="text-primary">查看试题</a>
+                                <!-- 新增：主观题批改入口 -->
+                <a href="{{ url_for('grade_subjective', exam_id=exam.id) }}" class="text-warning ml-2">批改主观题</a>
             </td>
         </tr>
         {% else %}
