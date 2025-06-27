@@ -558,19 +558,27 @@ def course_forum():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
+        image_filename = None
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename != '' and allowed_image(image_file.filename):
+                filename = secure_filename(image_file.filename)
+                unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                image_path = os.path.join(app.config['COVER_FOLDER'], unique_filename)
+                image_file.save(image_path)
+                image_filename = unique_filename
         new_post = ForumPost(
             title=title,
             content=content,
-            user_id=current_user.id
+            user_id=current_user.id,
+            image=image_filename  # 记得模型要有 image 字段
         )
         db.session.add(new_post)
         db.session.commit()
         flash('帖子发布成功')
         return redirect(url_for('course_forum'))
-        # 按创建时间降序排列（新的在上面）
     forum_posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
     return render_template('course_forum.html', forum_posts=forum_posts)
-
 @app.route('/forum/reply/<int:post_id>', methods=['POST'])
 @login_required
 def reply_to_post(post_id):

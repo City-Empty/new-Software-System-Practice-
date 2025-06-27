@@ -91,6 +91,8 @@ class ForumPost(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     replies = db.relationship('ForumReply', backref='post', lazy=True)
+    image = db.Column(db.String(256))
+
 
 class ForumReply(db.Model):
     id = db.Column(db.Integer, primary_key=True)

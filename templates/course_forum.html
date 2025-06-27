@@ -3,23 +3,30 @@
 {% block content %}
 <div class="forum-container">
     <h2>课程论坛</h2>
-    <form class="forum-form" method="POST" action="{{ url_for('course_forum') }}">
-        <div class="form-group">
-            <label for="title">标题</label>
-            <input type="text" id="title" name="title" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label for="content">内容</label>
-            <textarea id="content" name="content" class="form-control" rows="3" required></textarea>
-        </div>
-        <button type="submit" class="btn">发布帖子</button>
-    </form>
+   <form class="forum-form" method="POST" action="{{ url_for('course_forum') }}" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="title">标题</label>
+        <input type="text" id="title" name="title" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label for="content">内容</label>
+        <textarea id="content" name="content" class="form-control" rows="3" required></textarea>
+    </div>
+    <div class="form-group">
+        <label for="image">图片</label>
+        <input type="file" id="image" name="image" accept="image/*" class="form-control">
+    </div>
+    <button type="submit" class="btn">发布帖子</button>
+   </form>
     {% for post in forum_posts %}
     <div class="forum-post">
         <div class="forum-title">
             {{ post.title }} <span style="font-size:14px;color:#888;">by {{ post.user.username }}</span>
         </div>
         <div class="forum-content">{{ post.content }}</div>
+        {% if post.image %}
+          <img src="{{ url_for('cover_image', filename=post.image) }}" style="max-width:300px;" class="mb-2">
+        {% endif %}
         <div class="forum-replies">
             {% for reply in post.replies %}
             <div class="forum-reply">{{ reply.content }} - {{ reply.user.username }}</div>
