@@ -31,6 +31,7 @@ class Course(db.Model):
     exams = db.relationship('Exam', backref='course', lazy=True)
     learning_materials = db.Column(db.String(200))  # 学习材料文件名
     is_ended = db.Column(db.Boolean, default=False)  # 新增：课程是否已结束
+    cover_image = db.Column(db.String(200))  # 新增：课程封面图片文件名
 
     def get_average_score(self):
         results = ExamResult.query.join(Exam).filter(Exam.course_id == self.id).all()

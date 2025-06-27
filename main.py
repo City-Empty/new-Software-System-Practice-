@@ -19,12 +19,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eduhub.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/videos'
 app.config['MATERIALS_FOLDER'] = 'uploads/materials'
+app.config['COVER_FOLDER'] = 'uploads/covers'
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1GB
 app.permanent_session_lifetime = timedelta(hours=1)
 
 # 确保上传目录存在
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['MATERIALS_FOLDER'], exist_ok=True)
+os.makedirs(app.config['COVER_FOLDER'], exist_ok=True)
 
 # 初始化数据库和迁移工具
 db.init_app(app)
@@ -44,6 +46,11 @@ def load_user(user_id):
 def index():
     courses = Course.query.all()
     return render_template('index.html', courses=courses)
+
+# 封面图片访问
+@app.route('/cover/<path:filename>')
+def cover_image(filename):
+    return send_from_directory(app.config['COVER_FOLDER'], filename)
 
 
 # 课程详情
@@ -153,6 +160,18 @@ def create_course():
                     new_course.video_filename = unique_filename
                     db.session.commit()
 
+        # 处理封面图片上传
+        if 'cover' in request.files:
+            cover_file = request.files['cover']
+            if cover_file and cover_file.filename != '':
+                if allowed_image(cover_file.filename):
+                    cover_filename = secure_filename(cover_file.filename)
+                    unique_cover_filename = f"{os.urandom(16).hex()}_{cover_filename}"
+                    cover_path = os.path.join(app.config['COVER_FOLDER'], unique_cover_filename)
+                    cover_file.save(cover_path)
+                    new_course.cover_image = unique_cover_filename
+                    db.session.commit()
+
         flash('课程创建成功')
         return redirect(url_for('teacher_dashboard'))
     return render_template('teacher_course.html', course=None)
@@ -188,6 +207,22 @@ def edit_course(course_id):
                     file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                     video_file.save(file_path)
                     course.video_filename = unique_filename
+
+        # 处理封面图片更新
+        if 'cover' in request.files:
+            cover_file = request.files['cover']
+            if cover_file and cover_file.filename != '':
+                if allowed_image(cover_file.filename):
+                    # 删除旧封面
+                    if course.cover_image:
+                        old_cover_path = os.path.join(app.config['COVER_FOLDER'], course.cover_image)
+                        if os.path.exists(old_cover_path):
+                            os.remove(old_cover_path)
+                    cover_filename = secure_filename(cover_file.filename)
+                    unique_cover_filename = f"{os.urandom(16).hex()}_{cover_filename}"
+                    cover_path = os.path.join(app.config['COVER_FOLDER'], unique_cover_filename)
+                    cover_file.save(cover_path)
+                    course.cover_image = unique_cover_filename
 
         db.session.commit()
         flash('课程更新成功')
@@ -521,6 +556,9 @@ def reply_to_post(post_id):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'mp4', 'webm', 'ogg'}
+
+def allowed_image(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png', 'gif'}
 
 
 # 学生参加考试
