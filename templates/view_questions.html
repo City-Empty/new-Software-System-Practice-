@@ -7,6 +7,8 @@
 <div class="card mb-6">
     <div class="card-body">
         <a href="{{ url_for('add_question', exam_id=exam.id) }}" class="btn">添加新试题</a>
+                <!-- 新增：主观题批改入口 -->
+        <a href="{{ url_for('grade_subjective', exam_id=exam.id) }}" class="btn btn-warning ml-2">批改主观题</a>
     </div>
 </div>
 {% if questions %}
