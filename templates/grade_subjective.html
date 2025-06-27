@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}主观题批改 - {{ exam.title }}{% endblock %}
+{% block content %}
+<h2>{{ exam.title }} - 主观题批改</h2>
+<form method="post">
+    <table class="table-auto w-full border mb-6">
+        <thead>
+            <tr>
+                <th class="border px-2 py-1">学生</th>
+                {% for q in questions %}
+                <th class="border px-2 py-1">题目{{ loop.index }}</th>
+                {% endfor %}
+                <th class="border px-2 py-1">主观题总分</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td class="border px-2 py-1">{{ result.user.username }}</td>
+                {% set subjective_total = 0 %}
+                {% for q in questions %}
+                    {% set ans = result.parsed_answers.get(q.id|string, '') %}
+                    <td class="border px-2 py-1">
+                        <div><b>作答：</b>{{ ans }}</div>
+                        <div>
+                            <label>得分：</label>
+                            <input type="number" name="score_{{ q.id }}_{{ result.id }}" min="0" max="{{ q.score }}" step="0.1"
+                                value="{{ request.form.get('score_' ~ q.id ~ '_' ~ result.id, '') or '' }}" style="width:60px;">
+                            / {{ q.score }}
+                        </div>
+                    </td>
+                {% endfor %}
+                <td class="border px-2 py-1">
+                    {{ result.subjective_score or 0 }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">保存批改结果</button>
+    <a href="{{ url_for('teacher_all_exams') }}" class="btn btn-secondary ml-2">返回</a>
+</form>
+{% endblock %}

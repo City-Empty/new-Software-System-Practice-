@@ -13,23 +13,18 @@
       <img class="card-img-top"
            src="{% if course.cover_image %}{{ url_for('cover_image', filename=course.cover_image) }}{% else %}{{ url_for('static', filename='default_course.jpg') }}{% endif %}"
            style="height:180px;object-fit:cover;">
-      <div class="card-body">
-        <h5 class="card-title">{{ course.title }}</h5>
-        <p class="card-text text-truncate">{{ course.description }}</p>
-      </div>
+       <div class="card-body">
+         <h5 class="card-title">{{ course.title }}</h5>
+         <p class="card-text text-truncate">{{ course.description }}</p>
+       </div>
       <div class="card-footer bg-white border-0">
-        <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-primary btn-sm">进入课程</a>
-        {% for exam in course.exams %}
-          {% if (exam.id, current_user.id) in results_map %}
-            <a href="{{ url_for('exam_result', result_id=results_map[(exam.id, current_user.id)].id) }}" class="btn btn-success btn-sm ml-2">查看考试结果</a>
-          {% else %}
-            <a href="{{ url_for('take_exam', exam_id=exam.id) }}" class="btn btn-warning btn-sm ml-2">参加考试</a>
-          {% endif %}
-        {% endfor %}
+          <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-primary btn-sm">进入课程</a>
+          <a href="{{ url_for('student_exam_select', course_id=course.id) }}" class="btn btn-success btn-sm ml-2">查看考试结果</a>
+          <a href="{{ url_for('student_exam_take_select', course_id=course.id) }}" class="btn btn-warning btn-sm ml-2">参加考试</a>
       </div>
-    </div>
-  </div>
-{% endfor %}
-  </div>
-</div>
-{% endblock %}
+     </div>
+   </div>
+ {% endfor %}
+   </div>
+ </div>
+ {% endblock %}

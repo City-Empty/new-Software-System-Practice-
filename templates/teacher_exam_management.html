@@ -1,4 +1,3 @@
-<!-- templates/teacher_exam_management.html -->
 {% extends "base.html" %}
 {% block title %}{{ course.title }} - 考试管理{% endblock %}
 {% block content %}
@@ -19,13 +18,21 @@
                 试题数量: {{ exam.questions|length }}
             </p>
             <div class="mt-4 flex justify-between">
-                <!-- 修改此处的端点为 view_questions -->
                 <a href="{{ url_for('view_questions', exam_id=exam.id) }}" class="text-sm text-primary">
                     查看试题 <i class="fa fa-eye ml-1"></i>
                 </a>
                 <a href="{{ url_for('add_question', exam_id=exam.id) }}" class="text-sm text-primary">
                     添加试题 <i class="fa fa-plus ml-1"></i>
                 </a>
+                                <!-- 新增：主观题批改入口 -->
+                <a href="{{ url_for('grade_subjective', exam_id=exam.id) }}" class="text-sm text-warning">
+                    批改主观题 <i class="fa fa-edit ml-1"></i>
+                </a>
+            </div>
+            <div class="mt-4 text-right">
+                <form action="{{ url_for('delete_exam', exam_id=exam.id) }}" method="post" style="display:inline;" onsubmit="return confirm('确定要删除该考试吗？');">
+                    <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                </form>
             </div>
         </div>
     </div>

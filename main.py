@@ -408,6 +408,18 @@ def create_exam(course_id):
             correct_answer = None
             explanation = request.form.get(f'explanation_{i}', '')
 
+            # 处理图片上传
+            image_filename = None
+            image_field = f'image_{i}'
+            if image_field in request.files:
+                image_file = request.files[image_field]
+                if image_file and image_file.filename != '' and allowed_image(image_file.filename):
+                    filename = secure_filename(image_file.filename)
+                    unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                    image_path = os.path.join(app.config['COVER_FOLDER'], unique_filename)
+                    image_file.save(image_path)
+                    image_filename = unique_filename
+
             if question_type in ['single', 'multiple']:
                 options = {
                     'A': request.form.get(f'option_a_{i}', ''),
@@ -437,6 +449,7 @@ def create_exam(course_id):
                     score=score,
                     question_type=question_type,
                     explanation=explanation
+                    image=image_filename  # 保存图片文件名
                 )
                 db.session.add(question)
 
@@ -477,6 +490,17 @@ def add_question(exam_id):
         options = None
         correct_answer = None
 
+        # 处理图片上传
+        image_filename = None
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename != '' and allowed_image(image_file.filename):
+                filename = secure_filename(image_file.filename)
+                unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                image_path = os.path.join(app.config['COVER_FOLDER'], unique_filename)
+                image_file.save(image_path)
+                image_filename = unique_filename
+
         if question_type == 'single':
             # 单选题
             options = {
@@ -516,14 +540,14 @@ def add_question(exam_id):
             correct_answer=correct_answer,
             score=score,
             explanation=explanation,
-            question_type=question_type
+            question_type=question_type,
+            image=image_filename  # 只在这里加
         )
         db.session.add(new_question)
         db.session.commit()
         flash('试题添加成功')
         return redirect(url_for('view_questions', exam_id=exam_id))
     return render_template('add_question.html', exam=exam, question=None)
-
 # 编辑试题
 @app.route('/teacher/exam/<int:exam_id>/question/<int:question_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -570,6 +594,22 @@ def edit_question(exam_id, question_id):
             question.correct_answer = request.form.get('correct_answer', '')
         question.score = int(request.form.get('score', 1))
         question.explanation = request.form.get('explanation')
+
+        # 处理图片上传
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename != '' and allowed_image(image_file.filename):
+                # 删除旧图片
+                if question.image:
+                    old_path = os.path.join(app.config['COVER_FOLDER'], question.image)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                filename = secure_filename(image_file.filename)
+                unique_filename = f"{os.urandom(16).hex()}_{filename}"
+                image_path = os.path.join(app.config['COVER_FOLDER'], unique_filename)
+                image_file.save(image_path)
+                question.image = unique_filename
+
         db.session.commit()
         flash('试题修改成功')
         return redirect(url_for('view_questions', exam_id=exam_id))
@@ -590,7 +630,7 @@ def delete_question(exam_id, question_id):
     db.session.commit()
     flash('试题已删除')
     return redirect(url_for('view_questions', exam_id=exam_id))
-    
+
 #批改主观题(新增)
 @app.route('/teacher/exam/<int:exam_id>/grade_subjective', methods=['GET', 'POST'])
 @login_required
@@ -1008,7 +1048,91 @@ def end_course(course_id):
     else:
         flash('课程已处于结束状态。')
     return redirect(url_for('edit_course', course_id=course.id))
+# 多门考试结果查询
+@app.route('/student/course/<int:course_id>/exam_select')
+@login_required
+def student_exam_select(course_id):
+    if current_user.role != 'student':
+        abort(403)
+    course = Course.query.get_or_404(course_id)
+    exams = Exam.query.filter_by(course_id=course_id).all()
+    # 获取当前学生所有考试结果
+    results_map = {}
+    exam_results = ExamResult.query.filter_by(user_id=current_user.id).all()
+    for result in exam_results:
+        results_map[result.exam_id] = result
+    return render_template('student_exam_select.html', course=course, exams=exams, results_map=results_map)
 
+# 学生选择考试参加
+@app.route('/student/course/<int:course_id>/exam_take_select')
+@login_required
+def student_exam_take_select(course_id):
+    if current_user.role != 'student':
+        abort(403)
+    course = Course.query.get_or_404(course_id)
+    exams = Exam.query.filter_by(course_id=course_id).all()
+    # 获取已参加的考试
+    taken_exam_ids = {r.exam_id for r in ExamResult.query.filter_by(user_id=current_user.id).all()}
+    # 只显示未参加的考试
+    available_exams = [exam for exam in exams if exam.id not in taken_exam_ids]
+    return render_template('student_exam_take_select.html', course=course, exams=available_exams)
+
+# 删除考试
+@app.route('/teacher/exam/<int:exam_id>/delete', methods=['POST'])
+@login_required
+def delete_exam(exam_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    exam = Exam.query.get_or_404(exam_id)
+    course = exam.course
+    # 只能删除自己课程下的考试
+    if course.teacher_id != current_user.id:
+        abort(403)
+    # 删除考试下所有试题和成绩
+    for question in exam.questions:
+        db.session.delete(question)
+    for result in exam.exam_results:
+        db.session.delete(result)
+    db.session.delete(exam)
+    db.session.commit()
+    flash('考试已删除')
+    return redirect(url_for('teacher_course_exams', course_id=course.id))
+
+@app.route('/grade_subjective/<int:exam_id>', methods=['GET', 'POST'])
+@login_required
+def grade_subjective(exam_id):
+    if current_user.role != 'teacher':
+        abort(403)
+    exam = Exam.query.get_or_404(exam_id)
+    # 只允许本教师批改自己课程的考试
+    if exam.course.teacher_id != current_user.id:
+        abort(403)
+    # 只筛选主观题（假设类型为'short'或'blank'为主观题，根据你的模型调整）
+    questions = [q for q in exam.questions if q.question_type in ('short', 'blank')]
+    results = ExamResult.query.filter_by(exam_id=exam_id).all()
+    # 解析学生答案
+    for result in results:
+        try:
+            result.parsed_answers = json.loads(result.answer_json) if result.answer_json else {}
+        except Exception:
+            result.parsed_answers = {}
+    if request.method == 'POST':
+        for result in results:
+            subjective_score = 0
+            for q in questions:
+                score_key = f'score_{q.id}_{result.id}'
+                score_val = request.form.get(score_key)
+                if score_val:
+                    try:
+                        score = float(score_val)
+                    except ValueError:
+                        score = 0
+                    subjective_score += score
+            result.subjective_score = subjective_score
+            db.session.commit()
+        flash('批改结果已保存', 'success')
+        return redirect(url_for('grade_subjective', exam_id=exam_id))
+    return render_template('grade_subjective.html', exam=exam, questions=questions, results=results)
 
 if __name__ == '__main__':
     with app.app_context():

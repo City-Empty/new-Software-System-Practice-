@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}选择考试 - {{ course.title }}{% endblock %}
+{% block content %}
+<h3>选择要查看结果的考试 - {{ course.title }}</h3>
+<ul class="list-group">
+  {% for exam in exams %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      {{ exam.title }}
+      {% if results_map.get(exam.id) %}
+        <a href="{{ url_for('exam_result', result_id=results_map[exam.id].id) }}" class="btn btn-success btn-sm">查看结果</a>
+      {% else %}
+        <span class="text-muted">未参加</span>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}
