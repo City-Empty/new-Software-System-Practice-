@@ -3,6 +3,7 @@
 {% block content %}
 <div class="container mt-4">
   <h2 class="mb-4">我的课程</h2>
+  <a href="{{ url_for('create_course') }}" class="btn btn-primary mb-3">创建新课程</a>
   <div class="row">
     {% for course in courses %}
       <div class="col-md-4 col-12 mb-4">

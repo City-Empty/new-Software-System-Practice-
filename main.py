@@ -1234,6 +1234,11 @@ def grade_subjective(exam_id):
         return redirect(url_for('grade_subjective', exam_id=exam_id))
     return render_template('grade_subjective.html', exam=exam, questions=questions, results=results)
 
+    progress.progress_percentage = (progress.video_watched_percentage * 0.5) + (exam_percent * 0.5)
+    progress.updated_at = datetime.datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True})
+
 
 #更新学习进度
 @app.route('/api/update_progress', methods=['POST'])
@@ -1284,6 +1289,8 @@ def debug_progress(user_id, course_id):
         return f"学习进度记录: {progress.video_watched_percentage}%"
     else:
         return "没有找到学习进度记录"
+
+
 
 def rejudge_exam_results(exam_id):
     # 获取所有试题
