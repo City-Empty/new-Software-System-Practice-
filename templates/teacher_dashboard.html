@@ -11,7 +11,12 @@
       <div class="col-md-4 mb-4">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
-            <h5 class="card-title">{{ course.title }}</h5>
+            <h5 class="card-title">
+              {{ course.title }}
+              {% if course.is_ended %}
+                <span class="badge bg-danger ms-2">已结束</span>
+              {% endif %}
+            </h5>
             <p class="card-text">{{ course.description }}</p>
           </div>
           <div class="card-footer d-flex justify-content-between">
