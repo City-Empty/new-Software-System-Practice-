@@ -16,6 +16,16 @@
     border-radius: 8px 8px 0 0;
     background: #f3f4f6;
   }
+ .card {
+  min-height: 320px; /* 你可以根据实际内容调整 */
+  display: flex;
+  flex-direction: column;
+}
+.card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
 </style>
 {% endblock %}
 {% block content %}
@@ -33,14 +43,14 @@
           <div class="card-body">
             <h5 class="card-title">{{ course.title }}</h5>
             <p class="card-text">{{ course.description }}</p>
-    <div class="btn-group" role="group">
-  <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-primary rounded">查看详情</a>
-  {% if current_user.is_authenticated and current_user.role == 'student' and course not in current_user.enrolled_courses %}
-    <form method="post" action="{{ url_for('enroll_course', course_id=course.id) }}" style="display: contents;">
-      <button type="submit" class="btn btn-success rounded">选课</button>
-    </form>
-  {% endif %}
-</div>
+            <div class="btn-group" role="group">
+              <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-primary rounded">查看详情</a>
+              {% if current_user.is_authenticated and current_user.role == 'student' and course not in current_user.enrolled_courses %}
+                <form method="post" action="{{ url_for('enroll_course', course_id=course.id) }}" style="display: contents;">
+                  <button type="submit" class="btn btn-success rounded">选课</button>
+                </form>
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>
