@@ -78,13 +78,13 @@
     </div>
     <!-- 填空题 -->
     <div id="blank-answer" class="form-group" style="display:none;">
-        <label for="correct_answer">参考答案</label>
-        <input type="text" id="correct_answer_blank" name="correct_answer" class="form-control" value="{{ question.correct_answer }}">
+        <label for="blank_answer">参考答案</label>
+        <input type="text" id="blank_answer" name="blank_answer" class="form-control" value="{{ question.correct_answer if question.question_type == 'blank' else '' }}">
     </div>
     <!-- 简答题 -->
     <div id="short-answer" class="form-group" style="display:none;">
-        <label for="correct_answer">参考答案</label>
-        <textarea id="correct_answer_short" name="correct_answer" class="form-control" rows="2">{{ question.correct_answer }}</textarea>
+        <label for="short_answer">参考答案</label>
+        <textarea id="short_answer" name="short_answer" class="form-control" rows="2">{% if question.question_type == 'short' %}{{ question.correct_answer }}{% endif %}</textarea>
     </div>
     <div class="form-group">
         <label for="score">分值</label>

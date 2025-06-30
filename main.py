@@ -472,16 +472,16 @@ def create_exam(course_id):
                 if question_type == 'single':
                     correct_answer = request.form.get(f'correct_answer_{i}', '')
                 elif question_type == 'multiple':
-                    correct_answer_list = request.form.getlist(f'correct_answer_{i}')
+                    correct_answer_list = request.form.getlist(f'correct_answer_multi_{i}')
                     correct_answer = ','.join(sorted([x for x in correct_answer_list if x]))
             elif question_type == 'judge':
                 # 判断题固定选项
                 options = {'A': '正确', 'B': '错误'}
                 correct_answer = request.form.get(f'judge_answer{i}', '')
             elif question_type == 'blank':
-                correct_answer = request.form.get(f'correct_answer_{i}', '')
+                correct_answer = request.form.get(f'blank_answer_{i}', '')
             elif question_type == 'short':
-                correct_answer = request.form.get(f'correct_answer_{i}', '')
+                correct_answer = request.form.get(f'short_answer_{i}', '')
 
             if question_text and (options or question_type in ['blank', 'short']) and correct_answer is not None:
                 question = Question(
@@ -619,10 +619,10 @@ def edit_question(exam_id, question_id):
             question.correct_answer = request.form.get('correct_answer', 'A')
         elif question.question_type == 'blank':
             question.options = None
-            question.correct_answer = request.form.get('correct_answer', '')
+            question.correct_answer = request.form.get('blank_answer', '')
         elif question.question_type == 'short':
             question.options = None
-            question.correct_answer = request.form.get('correct_answer', '')
+            question.correct_answer = request.form.get('short_answer', '')
 
         question.score = int(request.form.get('score', 1))
         question.explanation = request.form.get('explanation')
