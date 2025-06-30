@@ -5,7 +5,10 @@
     <title>错误 {{ code }}</title>
     <style>
         body {
-            background: #f7f7f7;
+            /* 使用 error.jpg 作为背景，contain 保证图片完整显示 */
+            background: url("{{ url_for('static', filename='images/error.jpg') }}") no-repeat center center fixed;
+            background-size: contain;
+            background-color: #f7f7f7;
             font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
             color: #333;
             margin: 0;
@@ -14,16 +17,22 @@
         .error-container {
             max-width: 480px;
             margin: 100px auto 0 auto;
-            background: #fff;
+            /* 透明背景，带模糊提升可读性 */
+            background: rgba(255,255,255,0.2);
             border-radius: 10px;
             box-shadow: 0 2px 16px rgba(0,0,0,0.08);
             padding: 40px 30px;
             text-align: center;
+            backdrop-filter: blur(2px);
+        }
+        .error-code,
+        .error-message,
+        .auto-back {
+            color: #e74c3c !important;
         }
         .error-code {
             font-size: 72px;
             font-weight: bold;
-            color: #e74c3c;
             margin-bottom: 10px;
         }
         .error-message {
@@ -34,7 +43,7 @@
             display: inline-block;
             padding: 10px 24px;
             background: #3498db;
-            color: #fff;
+            color: #fff !important;
             border-radius: 5px;
             text-decoration: none;
             font-size: 16px;
@@ -43,14 +52,24 @@
         .back-link:hover {
             background: #217dbb;
         }
+        .auto-back {
+            margin-top: 16px;
+            font-size: 14px;
+        }
     </style>
+    <script>
+        // 3秒后自动跳转到首页
+        setTimeout(function() {
+            window.location.href = "{{ url_for('index') }}";
+        }, 3000);
+    </script>
 </head>
 <body>
     <div class="error-container">
         <div class="error-code">{{ code }}</div>
         <div class="error-message">{{ message }}</div>
         <a href="{{ url_for('index') }}" class="back-link">返回首页</a>
+        <div class="auto-back">3秒后自动返回首页...</div>
     </div>
 </body>
 </html>
-
