@@ -13,49 +13,13 @@
   </div>
   {% for question in questions %}
     {% set user_ans = student_answers.get(question.id|string) %}
-    {% set is_correct = false %}
-    {% if user_ans is not none %}
-      {% if question.question_type == 'multiple' %}
-        {# 过滤空项并排序后比较 #}
-        {% set correct_list = [] %}
-        {% for x in question.correct_answer.split(',') %}
-          {% set _x = x|replace(' ', '') %}
-          {% if _x %}
-            {% set correct_list = correct_list + [_x] %}
-          {% endif %}
-        {% endfor %}
-        {% set user_list = [] %}
-        {% for x in user_ans.split(',') %}
-          {% set _x = x|replace(' ', '') %}
-          {% if _x %}
-            {% set user_list = user_list + [_x] %}
-          {% endif %}
-        {% endfor %}
-        {% set correct = correct_list|sort|join(',') %}
-        {% set user_val = user_list|sort|join(',') %}
-        {% if user_val == correct %}
-          {% set is_correct = true %}
-        {% endif %}
-      {% elif question.question_type == 'judge' %}
-        {% if user_ans == question.correct_answer %}
-          {% set is_correct = true %}
-        {% endif %}
-      {% elif question.question_type == 'blank' %}
-        {% if user_ans.strip().lower() == (question.correct_answer or '').strip().lower() %}
-          {% set is_correct = true %}
-        {% endif %}
-      {% elif question.question_type == 'short' %}
-        {% set is_correct = false %}
-      {% else %}
-        {% if user_ans == question.correct_answer %}
-          {% set is_correct = true %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
+    {% set is_correct = is_correct_map.get(question.id|string, false) %}
     <div class="card mb-3">
-      <div class="card-header bg-light">
-        <strong>第{{ loop.index }}题：</strong> {{ question.question_text }}
-        <span class="badge float-end {% if is_correct %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <div>
+          <strong>第{{ loop.index }}题：</strong> {{ question.question_text }}
+        </div>
+        <span class="badge {% if is_correct %}bg-success{% else %}bg-danger{% endif %} text-white">
           分值：{{ question.score }}
         </span>
       </div>

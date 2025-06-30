@@ -13,6 +13,7 @@ from sqlalchemy import JSON
 import json
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
+from sqlalchemy.orm import joinedload
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'eduhub-secret-key'
@@ -643,7 +644,11 @@ def edit_question(exam_id, question_id):
                 question.image = unique_filename
 
         db.session.commit()
-        flash('试题修改成功')
+
+        # 重新判分所有相关学生答卷
+        rejudge_exam_results(exam_id)
+
+        flash('试题修改成功，相关学生成绩已自动更新')
         return redirect(url_for('view_questions', exam_id=exam_id))
     return render_template('edit_question.html', exam=exam, question=question)
 
@@ -854,13 +859,17 @@ def exam_result(result_id):
     questions = Question.query.filter_by(exam_id=exam.id).all()
     # 解析学生答案
     student_answers = {}
+    is_correct_map = {}
     if result.answer_json:
         try:
             student_answers = json.loads(result.answer_json)
+            is_correct_map = student_answers.get("_is_correct", {})
         except Exception:
             student_answers = {}
+            is_correct_map = {}
     else:
         student_answers = {}
+        is_correct_map = {}
 
     # 处理答案显示格式
     def format_answer(ans, qtype):
@@ -886,7 +895,8 @@ def exam_result(result_id):
         questions=questions,
         total_score=result.total_possible_score,
         student_answers=student_answers,
-        format_answer=format_answer
+        format_answer=format_answer,
+        is_correct_map=is_correct_map
     )
 
 
@@ -1229,6 +1239,56 @@ def debug_progress(user_id, course_id):
         return f"学习进度记录: {progress.video_watched_percentage}%"
     else:
         return "没有找到学习进度记录"
+
+def rejudge_exam_results(exam_id):
+    # 获取所有试题
+    questions = Question.query.filter_by(exam_id=exam_id).all()
+    question_map = {str(q.id): q for q in questions}
+    # 获取所有答卷
+    results = ExamResult.query.filter_by(exam_id=exam_id).all()
+    for result in results:
+        # 解析学生答案
+        try:
+            student_answers = json.loads(result.answer_json) if result.answer_json else {}
+        except Exception:
+            student_answers = {}
+        total_score = 0
+        total_possible_score = sum(q.score for q in questions)
+        # 新增：为每道题保存正误信息
+        is_correct_map = {}
+        for question in questions:
+            qid = str(question.id)
+            user_answer = student_answers.get(qid, '')
+            correct = False
+            if question.question_type == 'multiple':
+                user_answer = ','.join(sorted([ans.strip() for ans in user_answer.split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
+                correct_answer = ','.join(sorted([ans.strip() for ans in (question.correct_answer or '').split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
+                if user_answer == correct_answer:
+                    total_score += question.score
+                    correct = True
+            elif question.question_type == 'judge':
+                if user_answer == (question.correct_answer or ''):
+                    total_score += question.score
+                    correct = True
+            elif question.question_type == 'blank':
+                if user_answer.strip().lower() == (question.correct_answer or '').strip().lower():
+                    total_score += question.score
+                    correct = True
+            elif question.question_type == 'short':
+                correct = False  # 简答题不自动判分
+            else:
+                if user_answer == (question.correct_answer or ''):
+                    total_score += question.score
+                    correct = True
+            is_correct_map[qid] = correct
+        # 保存正误信息到answer_json（如果需要前端用，可以合并到answer_json或单独存储）
+        # 这里将正误信息合并到answer_json的"_is_correct"字段
+        if isinstance(student_answers, dict):
+            student_answers["_is_correct"] = is_correct_map
+            result.answer_json = json.dumps(student_answers, ensure_ascii=False)
+        result.score = total_score
+        result.total_possible_score = total_possible_score
+        db.session.commit()
 
 if __name__ == '__main__':
     with app.app_context():
