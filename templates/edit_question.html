@@ -54,29 +54,37 @@
     <div id="multiple-answer" class="form-group" style="display:none;">
         <label for="correct_answer">正确答案（可多选）</label>
         <div>
-            <label><input type="checkbox" name="correct_answer" value="A" {% if 'A' in question.correct_answer %}checked{% endif %}> A</label>
-            <label><input type="checkbox" name="correct_answer" value="B" {% if 'B' in question.correct_answer %}checked{% endif %}> B</label>
-            <label><input type="checkbox" name="correct_answer" value="C" {% if 'C' in question.correct_answer %}checked{% endif %}> C</label>
-            <label><input type="checkbox" name="correct_answer" value="D" {% if 'D' in question.correct_answer %}checked{% endif %}> D</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="A" {% if 'A' in question.correct_answer %}checked{% endif %}> A</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="B" {% if 'B' in question.correct_answer %}checked{% endif %}> B</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="C" {% if 'C' in question.correct_answer %}checked{% endif %}> C</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="D" {% if 'D' in question.correct_answer %}checked{% endif %}> D</label>
         </div>
     </div>
     <!-- 判断题 -->
     <div id="judge-answer" class="form-group" style="display:none;">
         <label for="correct_answer">正确答案</label>
         <select id="correct_answer_judge" name="correct_answer" class="form-control">
-            <option value="True" {% if question.correct_answer == 'True' %}selected{% endif %}>正确</option>
-            <option value="False" {% if question.correct_answer == 'False' %}selected{% endif %}>错误</option>
+            <option value="A" {% if question.correct_answer == 'A' %}selected{% endif %}>正确</option>
+            <option value="B" {% if question.correct_answer == 'B' %}selected{% endif %}>错误</option>
         </select>
+        <div class="form-group mt-2">
+            <label>选项A</label>
+            <input type="text" class="form-control" value="正确" readonly>
+        </div>
+        <div class="form-group">
+            <label>选项B</label>
+            <input type="text" class="form-control" value="错误" readonly>
+        </div>
     </div>
     <!-- 填空题 -->
     <div id="blank-answer" class="form-group" style="display:none;">
-        <label for="correct_answer">参考答案</label>
-        <input type="text" id="correct_answer_blank" name="correct_answer" class="form-control" value="{{ question.correct_answer }}">
+        <label for="blank_answer">参考答案</label>
+        <input type="text" id="blank_answer" name="blank_answer" class="form-control" value="{{ question.correct_answer if question.question_type == 'blank' else '' }}">
     </div>
     <!-- 简答题 -->
     <div id="short-answer" class="form-group" style="display:none;">
-        <label for="correct_answer">参考答案</label>
-        <textarea id="correct_answer_short" name="correct_answer" class="form-control" rows="2">{{ question.correct_answer }}</textarea>
+        <label for="short_answer">参考答案</label>
+        <textarea id="short_answer" name="short_answer" class="form-control" rows="2">{% if question.question_type == 'short' %}{{ question.correct_answer }}{% endif %}</textarea>
     </div>
     <div class="form-group">
         <label for="score">分值</label>
@@ -100,7 +108,6 @@ function showFieldsByType() {
     document.getElementById('blank-answer').style.display = (type === 'blank') ? '' : 'none';
     document.getElementById('short-answer').style.display = (type === 'short') ? '' : 'none';
 }
-// 页面加载时自动切换
 document.addEventListener('DOMContentLoaded', showFieldsByType);
 </script>
 {% endblock %}
