@@ -75,11 +75,11 @@ function addQuestion() {
           <label>B</label>
           <input type="text" class="form-control" name="option_b_${questionIndex}">
         </div>
-        <div class="col">
+        <div class="col c-c" id="option-c-col-${questionIndex}">
           <label>C</label>
           <input type="text" class="form-control" name="option_c_${questionIndex}">
         </div>
-        <div class="col">
+        <div class="col c-d" id="option-d-col-${questionIndex}">
           <label>D</label>
           <input type="text" class="form-control" name="option_d_${questionIndex}">
         </div>
@@ -106,9 +106,9 @@ function addQuestion() {
     </div>
     <div class="mb-2" id="judge-answer-${questionIndex}" style="display:none;">
       <label>正确答案</label>
-      <select class="form-select" name="correct_answer_${questionIndex}">
-        <option value="True">正确</option>
-        <option value="False">错误</option>
+      <select class="form-select" name="judge_answer${questionIndex}">
+        <option value="A">正确</option>
+        <option value="B">错误</option>
       </select>
     </div>
     <div class="mb-2" id="blank-answer-${questionIndex}" style="display:none;">
@@ -139,12 +139,27 @@ function updateCount() {
 }
 function showFieldsByType(select, idx) {
   const type = select.value;
-  document.getElementById('choice-options-' + idx).style.display = (type === 'single' || type === 'multiple') ? '' : 'none';
+  document.getElementById('choice-options-' + idx).style.display = (type === 'single' || type === 'multiple' || type === 'judge') ? '' : 'none';
   document.getElementById('single-answer-' + idx).style.display = (type === 'single') ? '' : 'none';
   document.getElementById('multiple-answer-' + idx).style.display = (type === 'multiple') ? '' : 'none';
   document.getElementById('judge-answer-' + idx).style.display = (type === 'judge') ? '' : 'none';
   document.getElementById('blank-answer-' + idx).style.display = (type === 'blank') ? '' : 'none';
   document.getElementById('short-answer-' + idx).style.display = (type === 'short') ? '' : 'none';
+  // 判断题只显示A/B选项并固定内容
+  if (type === 'judge') {
+    document.getElementById('option-c-col-' + idx).style.display = 'none';
+    document.getElementById('option-d-col-' + idx).style.display = 'none';
+    // 固定A/B内容
+    document.querySelector(`input[name="option_a_${idx}"]`).value = '正确';
+    document.querySelector(`input[name="option_b_${idx}"]`).value = '错误';
+    document.querySelector(`input[name="option_a_${idx}"]`).readOnly = true;
+    document.querySelector(`input[name="option_b_${idx}"]`).readOnly = true;
+  } else {
+    document.getElementById('option-c-col-' + idx).style.display = '';
+    document.getElementById('option-d-col-' + idx).style.display = '';
+    document.querySelector(`input[name="option_a_${idx}"]`).readOnly = false;
+    document.querySelector(`input[name="option_b_${idx}"]`).readOnly = false;
+  }
 }
 </script>
 {% endblock %}

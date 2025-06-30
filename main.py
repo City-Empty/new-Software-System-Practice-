@@ -469,20 +469,21 @@ def create_exam(course_id):
                     'C': request.form.get(f'option_c_{i}', ''),
                     'D': request.form.get(f'option_d_{i}', '')
                 }
-            if question_type == 'single':
-                correct_answer = request.form.get(f'correct_answer_{i}', '')
-            elif question_type == 'multiple':
-                correct_answer_list = request.form.getlist(f'correct_answer_{i}')
-                # 排除空字符串并排序
-                correct_answer = ','.join(sorted([x for x in correct_answer_list if x]))
+                if question_type == 'single':
+                    correct_answer = request.form.get(f'correct_answer_{i}', '')
+                elif question_type == 'multiple':
+                    correct_answer_list = request.form.getlist(f'correct_answer_{i}')
+                    correct_answer = ','.join(sorted([x for x in correct_answer_list if x]))
             elif question_type == 'judge':
-                correct_answer = request.form.get(f'correct_answer_{i}', '')
+                # 判断题固定选项
+                options = {'A': '正确', 'B': '错误'}
+                correct_answer = request.form.get(f'judge_answer{i}', '')
             elif question_type == 'blank':
                 correct_answer = request.form.get(f'correct_answer_{i}', '')
             elif question_type == 'short':
                 correct_answer = request.form.get(f'correct_answer_{i}', '')
 
-            if question_text and (options or question_type in ['judge', 'blank', 'short']) and correct_answer is not None:
+            if question_text and (options or question_type in ['blank', 'short']) and correct_answer is not None:
                 question = Question(
                     exam_id=new_exam.id,
                     question_text=question_text,
@@ -491,14 +492,12 @@ def create_exam(course_id):
                     score=score,
                     question_type=question_type,
                     explanation=explanation,
-                    image=image_filename  # 保存图片文件名
+                    image=image_filename
                 )
                 db.session.add(question)
-
         db.session.commit()
         flash('考试创建成功')
         return redirect(url_for('teacher_course_exams', course_id=course_id))
-
     return render_template('create_exam.html', course=course)
 
 
@@ -544,7 +543,6 @@ def add_question(exam_id):
                 image_filename = unique_filename
 
         if question_type == 'single':
-            # 单选题
             options = {
                 'A': request.form.get('option_a', ''),
                 'B': request.form.get('option_b', ''),
@@ -553,27 +551,22 @@ def add_question(exam_id):
             }
             correct_answer = request.form.get('correct_answer', 'A')
         elif question_type == 'multiple':
-            # 多选题
             options = {
                 'A': request.form.get('option_a', ''),
                 'B': request.form.get('option_b', ''),
                 'C': request.form.get('option_c', ''),
                 'D': request.form.get('option_d', '')
             }
-            # 多选答案为多个checkbox，需拼接
             correct_answer_list = request.form.getlist('correct_answer_multi')
             correct_answer = ','.join(sorted(correct_answer_list))
         elif question_type == 'blank':
-            # 填空题
             correct_answer = request.form.get('blank_answer', '')
         elif question_type == 'short':
-            # 简答题
             correct_answer = request.form.get('short_answer', '')
         elif question_type == 'judge':
-            # 判断题
-            # 前端radio value为A/B，转为True/False
-            judge_val = request.form.get('judge_answer', 'A')
-            correct_answer = 'True' if judge_val == 'A' else 'False'
+            # 判断题固定选项
+            options = {'A': '正确', 'B': '错误'}
+            correct_answer = request.form.get('judge_answer', 'A')
 
         new_question = Question(
             exam_id=exam_id,
@@ -583,7 +576,7 @@ def add_question(exam_id):
             score=score,
             explanation=explanation,
             question_type=question_type,
-            image=image_filename  # 只在这里加
+            image=image_filename
         )
         db.session.add(new_question)
         db.session.commit()
@@ -606,9 +599,7 @@ def edit_question(exam_id, question_id):
         # 获取题目文本内容和类型
         question.question_text = request.form['question_text']
         question.question_type = request.form.get('question_type', 'single')
-        # 题目为单选或多选
         if question.question_type in ['single', 'multiple']:
-            # 选择题
             question.options = {
                 'A': request.form.get('option_a', ''),
                 'B': request.form.get('option_b', ''),
@@ -616,22 +607,18 @@ def edit_question(exam_id, question_id):
                 'D': request.form.get('option_d', '')
             }
             if question.question_type == 'single':
-                # 单选题：从前端表单获取名为correct_answer的字段，若没有的话则默认值为A
                 question.correct_answer = request.form.get('correct_answer', 'A')
             else:
-                # 多选题
                 correct_answer_list = request.form.getlist('correct_answer')
                 question.correct_answer = ','.join(sorted(correct_answer_list))
         elif question.question_type == 'judge':
-            # 判断题
-            question.options = None
-            question.correct_answer = request.form.get('correct_answer', 'True')
+            # 判断题固定选项
+            question.options = {'A': '正确', 'B': '错误'}
+            question.correct_answer = request.form.get('correct_answer', 'A')
         elif question.question_type == 'blank':
-            # 填空题
             question.options = None
             question.correct_answer = request.form.get('correct_answer', '')
         elif question.question_type == 'short':
-            # 简答题
             question.options = None
             question.correct_answer = request.form.get('correct_answer', '')
 
@@ -781,10 +768,6 @@ def take_exam(exam_id):
                 user_answer = ','.join(sorted([ans.strip() for ans in user_answer_raw.split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
             elif question.question_type == 'judge':
                 user_answer = request.form.get(f'question_{qid}', '').strip()
-                if user_answer == 'True':
-                    user_answer = 'True'
-                elif user_answer == 'False':
-                    user_answer = 'False'
             else:
                 user_answer = request.form.get(f'question_{qid}', '').strip()
             student_answers[qid] = user_answer
@@ -885,7 +868,12 @@ def exam_result(result_id):
             # 只显示非空选项，逗号分隔
             return ','.join([x for x in ans.split(',') if x.strip()])
         elif qtype == 'judge':
-            return '正确' if ans == 'True' else '错误'
+            if ans == 'A':
+                return '正确'
+            elif ans == 'B':
+                return '错误'
+            else:
+                return ans
         else:
             return ans
 

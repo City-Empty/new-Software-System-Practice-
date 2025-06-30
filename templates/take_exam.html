@@ -41,17 +41,17 @@
           {% elif question.question_type == 'judge' %}
             <div class="form-check mb-2">
               <input class="form-check-input" type="radio"
-                     name="question_{{ question.id }}" id="q{{ question.id }}_true"
-                     value="True" required>
-              <label class="form-check-label" for="q{{ question.id }}_true">
+                     name="question_{{ question.id }}" id="q{{ question.id }}_A"
+                     value="A" required>
+              <label class="form-check-label" for="q{{ question.id }}_A">
                 正确
               </label>
             </div>
             <div class="form-check mb-2">
               <input class="form-check-input" type="radio"
-                     name="question_{{ question.id }}" id="q{{ question.id }}_false"
-                     value="False" required>
-              <label class="form-check-label" for="q{{ question.id }}_false">
+                     name="question_{{ question.id }}" id="q{{ question.id }}_B"
+                     value="B" required>
+              <label class="form-check-label" for="q{{ question.id }}_B">
                 错误
               </label>
             </div>

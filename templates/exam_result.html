@@ -62,11 +62,19 @@
       <div class="card-body">
         <div>
           <strong>你的答案：</strong>
-          {{ format_answer(student_answers[question.id|string], question.question_type) if student_answers.get(question.id|string) else '未作答' }}
+          {% if question.question_type == 'judge' %}
+            {% if student_answers.get(question.id|string) == 'A' %}正确{% elif student_answers.get(question.id|string) == 'B' %}错误{% else %}未作答{% endif %}
+          {% else %}
+            {{ format_answer(student_answers[question.id|string], question.question_type) if student_answers.get(question.id|string) else '未作答' }}
+          {% endif %}
         </div>
         <div>
           <strong>标准答案：</strong>
-          {{ format_answer(question.correct_answer, question.question_type) }}
+          {% if question.question_type == 'judge' %}
+            {% if question.correct_answer == 'A' %}正确{% elif question.correct_answer == 'B' %}错误{% else %}{{ question.correct_answer }}{% endif %}
+          {% else %}
+            {{ format_answer(question.correct_answer, question.question_type) }}
+          {% endif %}
         </div>
         {% if question.explanation %}
         <div class="mt-2">
