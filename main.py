@@ -766,15 +766,13 @@ def take_exam(exam_id):
     if request.method == 'POST':
         total_score = 0
         total_possible_score = sum(q.score for q in questions)
-        # 记录学生答案
         student_answers = {}
+        is_correct_map = {}
         for question in questions:
             qid = str(question.id)
             user_answer = ''
             if question.question_type == 'multiple':
-                # 获取所有选中的checkbox，前端已合并为逗号分隔字符串
                 user_answer_raw = request.form.get(f'question_{qid}', '')
-                # 只保留A/B/C/D等有效选项
                 user_answer = ','.join(sorted([ans.strip() for ans in user_answer_raw.split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
             elif question.question_type == 'judge':
                 user_answer = request.form.get(f'question_{qid}', '').strip()
@@ -782,24 +780,31 @@ def take_exam(exam_id):
                 user_answer = request.form.get(f'question_{qid}', '').strip()
             student_answers[qid] = user_answer
 
-            # 判分
+            # 判分并记录正误
+            correct = False
             if question.question_type == 'multiple':
-                correct = ','.join(sorted([ans.strip() for ans in question.correct_answer.split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
-                if user_answer == correct:
+                correct = (
+                    user_answer ==
+                    ','.join(sorted([ans.strip() for ans in (question.correct_answer or '').split(',') if ans.strip() in ['A', 'B', 'C', 'D']]))
+                )
+                if correct:
                     total_score += question.score
             elif question.question_type == 'judge':
-                if user_answer == question.correct_answer:
+                correct = user_answer == (question.correct_answer or '')
+                if correct:
                     total_score += question.score
             elif question.question_type == 'blank':
-                if user_answer.strip().lower() == (question.correct_answer or '').strip().lower():
-                    total_score += question.score
+                correct = False  # 填空题不再自动判分，交由教师评分
             elif question.question_type == 'short':
-                pass  # 简答题不自动判分
+                correct = False  # 简答题不自动判分
             else:
-                if user_answer == question.correct_answer:
+                correct = user_answer == (question.correct_answer or '')
+                if correct:
                     total_score += question.score
+            is_correct_map[qid] = correct
 
-        # 保存考试结果，包含学生答案
+        # 保存考试结果，包含学生答案和正误信息
+        student_answers["_is_correct"] = is_correct_map
         result = ExamResult(
             user_id=current_user.id,
             exam_id=exam_id,
@@ -809,12 +814,9 @@ def take_exam(exam_id):
         )
         db.session.add(result)
         db.session.commit()
-
         update_learning_progress(current_user.id, exam.course_id)
-
         flash('考试已提交，感谢参与！')
         return redirect(url_for('exam_result', result_id=result.id))
-
     return render_template('take_exam.html', exam=exam, questions=questions)
 
 #进度更新逻辑
@@ -863,16 +865,20 @@ def exam_result(result_id):
     # 解析学生答案
     student_answers = {}
     is_correct_map = {}
+    subjective_scores = {}
     if result.answer_json:
         try:
             student_answers = json.loads(result.answer_json)
             is_correct_map = student_answers.get("_is_correct", {})
+            subjective_scores = student_answers.get("_subjective_scores", {})
         except Exception:
             student_answers = {}
             is_correct_map = {}
+            subjective_scores = {}
     else:
         student_answers = {}
         is_correct_map = {}
+        subjective_scores = {}
 
     # 处理答案显示格式
     def format_answer(ans, qtype):
@@ -899,7 +905,8 @@ def exam_result(result_id):
         total_score=result.total_possible_score,
         student_answers=student_answers,
         format_answer=format_answer,
-        is_correct_map=is_correct_map
+        is_correct_map=is_correct_map,
+        subjective_scores=subjective_scores
     )
 
 
@@ -1183,15 +1190,25 @@ def grade_subjective(exam_id):
     # 只筛选主观题（假设类型为'short'或'blank'为主观题，根据你的模型调整）
     questions = [q for q in exam.questions if q.question_type in ('short', 'blank')]
     results = ExamResult.query.filter_by(exam_id=exam_id).all()
-    # 解析学生答案
+    # 解析学生答案和主观题得分
     for result in results:
         try:
             result.parsed_answers = json.loads(result.answer_json) if result.answer_json else {}
         except Exception:
             result.parsed_answers = {}
+        # 新增：解析每道主观题的得分
+        result.subjective_scores = {}
+        for q in questions:
+            score_key = f"score_{q.id}"
+            # 优先取answer_json中的分数
+            if result.parsed_answers.get('_subjective_scores', {}).get(str(q.id)) is not None:
+                result.subjective_scores[str(q.id)] = result.parsed_answers['_subjective_scores'][str(q.id)]
+            else:
+                result.subjective_scores[str(q.id)] = None
     if request.method == 'POST':
         for result in results:
             subjective_score = 0
+            subjective_scores = {}
             for q in questions:
                 score_key = f'score_{q.id}_{result.id}'
                 score_val = request.form.get(score_key)
@@ -1201,8 +1218,18 @@ def grade_subjective(exam_id):
                     except ValueError:
                         score = 0
                     subjective_score += score
+                    subjective_scores[str(q.id)] = score
             result.subjective_score = subjective_score
+            # 保存每道主观题分数到answer_json
+            try:
+                parsed = json.loads(result.answer_json) if result.answer_json else {}
+            except Exception:
+                parsed = {}
+            parsed['_subjective_scores'] = subjective_scores
+            result.answer_json = json.dumps(parsed, ensure_ascii=False)
             db.session.commit()
+        # 重新判分所有相关学生答卷（会自动更新is_correct_map和总分）
+        rejudge_exam_results(exam_id)
         flash('批改结果已保存', 'success')
         return redirect(url_for('grade_subjective', exam_id=exam_id))
     return render_template('grade_subjective.html', exam=exam, questions=questions, results=results)
@@ -1289,9 +1316,7 @@ def rejudge_exam_results(exam_id):
                     total_score += question.score
                     correct = True
             elif question.question_type == 'blank':
-                if user_answer.strip().lower() == (question.correct_answer or '').strip().lower():
-                    total_score += question.score
-                    correct = True
+                correct = False  # 填空题不再自动判分，交由教师评分
             elif question.question_type == 'short':
                 correct = False  # 简答题不自动判分
             else:
@@ -1299,12 +1324,13 @@ def rejudge_exam_results(exam_id):
                     total_score += question.score
                     correct = True
             is_correct_map[qid] = correct
-        # 保存正误信息到answer_json（如果需要前端用，可以合并到answer_json或单独存储）
-        # 这里将正误信息合并到answer_json的"_is_correct"字段
+        # 合并正误信息到answer_json
         if isinstance(student_answers, dict):
             student_answers["_is_correct"] = is_correct_map
             result.answer_json = json.dumps(student_answers, ensure_ascii=False)
-        result.score = total_score
+        # 累加主观题分数
+        subjective_score = result.subjective_score or 0
+        result.score = total_score + subjective_score
         result.total_possible_score = total_possible_score
         db.session.commit()
 
@@ -1359,6 +1385,39 @@ def certificates():
         )
     else:
         abort(403)
+    # 这里根据你的业务逻辑获取已完成课程和证书
+    courses = current_user.enrolled_courses
+    progress_records = LearningProgress.query.filter_by(user_id=current_user.id).all()
+    progress_map = {r.course_id: r for r in progress_records}
+    completed_courses = [
+        c for c in courses
+        if progress_map.get(c.id)
+           and (progress_map[c.id].progress_percentage or 0) >= 100
+           and c.is_ended
+    ]
+    completed_count = len(completed_courses)
+    certificate_thresholds = [5, 10, 15, 20]
+    certificates = []
+    for threshold in certificate_thresholds:
+        if completed_count >= threshold:
+            certificates.append({
+                'level': threshold,
+                'name': f'完成{threshold}门课程证书'
+            })
+    return render_template(
+        'student_certificates.html',
+        completed_courses=completed_courses,
+        certificates=certificates
+    )
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('error.html', code=403, message='您无权限查看此页面。'), 403
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('error.html', code=404, message='您访问的页面不存在。'), 404
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

@@ -13,13 +13,34 @@
   </div>
   {% for question in questions %}
     {% set user_ans = student_answers.get(question.id|string) %}
-    {% set is_correct = is_correct_map.get(question.id|string, false) %}
+    {% set is_correct = student_answers.get('_is_correct', {}).get(question.id|string, false) %}
+    {% set subj_score = subjective_scores[question.id|string] if subjective_scores and subjective_scores[question.id|string] is not none else None %}
+    {% set badge_class = "bg-secondary" %}
+    {% if question.question_type in ['single', 'multiple', 'judge'] %}
+      {% if is_correct %}
+        {% set badge_class = "bg-success" %}
+      {% else %}
+        {% set badge_class = "bg-danger" %}
+      {% endif %}
+    {% elif question.question_type in ['short', 'blank'] %}
+      {% if subj_score is not none %}
+        {% if subj_score == question.score %}
+          {% set badge_class = "bg-success" %}
+        {% elif subj_score == 0 %}
+          {% set badge_class = "bg-danger" %}
+        {% else %}
+          {% set badge_class = "bg-warning text-dark" %}
+        {% endif %}
+      {% else %}
+        {% set badge_class = "bg-secondary" %}
+      {% endif %}
+    {% endif %}
     <div class="card mb-3">
       <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <div>
           <strong>第{{ loop.index }}题：</strong> {{ question.question_text }}
         </div>
-        <span class="badge {% if is_correct %}bg-success{% else %}bg-danger{% endif %} text-white">
+        <span class="badge {{ badge_class }}">
           分值：{{ question.score }}
         </span>
       </div>
@@ -40,6 +61,12 @@
             {{ format_answer(question.correct_answer, question.question_type) }}
           {% endif %}
         </div>
+        {% if question.question_type in ['short', 'blank'] %}
+          <div class="mt-2">
+            <strong>主观题得分：</strong>
+            {{ subj_score|default('未评分') }} / {{ question.score }}
+          </div>
+        {% endif %}
         {% if question.explanation %}
         <div class="mt-2">
           <strong>解析：</strong> {{ question.explanation }}
