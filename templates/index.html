@@ -30,6 +30,26 @@
 {% endblock %}
 {% block content %}
   {% if current_user.is_authenticated %}
+    <form method="get" action="{{ url_for('index') }}" class="mb-4">
+      <div class="row">
+        <div class="col-md-3">
+          <input type="text" name="title" class="form-control" placeholder="课程名称" value="{{ request.args.title }}">
+        </div>
+        <div class="col-md-3">
+          <input type="text" name="teacher" class="form-control" placeholder="教师" value="{{ request.args.teacher }}">
+        </div>
+        <div class="col-md-3">
+          <select name="is_ended" class="form-control">
+            <option value="">全部</option>
+            <option value="0" {% if request.args.is_ended == '0' %}selected{% endif %}>未结束</option>
+            <option value="1" {% if request.args.is_ended == '1' %}selected{% endif %}>已结束</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary w-100">筛选</button>
+        </div>
+      </div>
+    </form>
     <h2>课程列表</h2>
     <div class="row">
       {% for course in courses %}
