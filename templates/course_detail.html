@@ -4,6 +4,13 @@
 <h2>{{ course.title }}</h2>
 <div class="card">
     <div class="card-body">
+        <!-- 课程封面区域 -->
+        {% if course.cover_image %}
+            <img src="{{ url_for('cover_image', filename=course.cover_image) }}" alt="课程封面" style="width:100%;max-width:400px;display:block;margin:0 auto 24px;">
+        {% else %}
+            <img src="{{ url_for('static', filename='default_cover.png') }}" alt="默认封面" style="width:100%;max-width:400px;display:block;margin:0 auto 24px;">
+        {% endif %}
+
         <!-- 视频播放区域 -->
         <div class="video-container">
             {% if course.video_filename %}
@@ -23,7 +30,7 @@
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            course_id: {{ course.id }},
+                            course_id: {{ course.id|tojson }},
                             video_percent: percent
                         })
                     });

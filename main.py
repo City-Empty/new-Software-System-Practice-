@@ -73,15 +73,18 @@ def cover_image(filename):
 @app.route('/course/<int:course_id>')
 def course_detail(course_id):
     course = Course.query.get_or_404(course_id)
-    # 解析资料文件名列表
     material_files = []
     if course.learning_materials:
         try:
             material_files = json.loads(course.learning_materials)
         except Exception:
             material_files = []
-    return render_template('course_detail.html', course=course, material_files=material_files)
-
+    # 判断封面
+    if course.cover_image:
+        cover_url = url_for('cover_image', filename=course.cover_image)
+    else:
+        cover_url = url_for('static', filename='default_cover.png')
+    return render_template('course_detail.html', course=course, material_files=material_files, cover_url=cover_url)
 
 # 视频播放
 @app.route('/video/<path:filename>')

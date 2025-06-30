@@ -17,7 +17,7 @@
     background: #f3f4f6;
   }
  .card {
-  min-height: 320px; /* 你可以根据实际内容调整 */
+  min-height: 320px;
   display: flex;
   flex-direction: column;
 }
@@ -38,7 +38,7 @@
           {% if course.cover_image %}
             <img src="{{ url_for('cover_image', filename=course.cover_image) }}" class="course-cover" alt="课程封面">
           {% else %}
-            <img src="{{ url_for('static', filename='images/default_cover.jpg') }}" class="course-cover" alt="默认封面">
+            <img src="{{ url_for('static', filename='default_cover.png') }}" class="course-cover" alt="默认封面">
           {% endif %}
           <div class="card-body">
             <h5 class="card-title">{{ course.title }}</h5>

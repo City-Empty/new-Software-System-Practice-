@@ -11,7 +11,7 @@
         {{ item.course.teacher.username }}
       </div>
       <img class="card-img-top"
-           src="{% if item.course.cover_image %}{{ url_for('cover_image', filename=item.course.cover_image) }}{% else %}{{ url_for('static', filename='default_course.jpg') }}{% endif %}"
+           src="{% if item.course.cover_image %}{{ url_for('cover_image', filename=item.course.cover_image) }}{% else %}{{ url_for('static', filename='default_cover.png') }}{% endif %}"
            style="height:180px;object-fit:cover;">
       <div class="card-body">
         <h5 class="card-title">
