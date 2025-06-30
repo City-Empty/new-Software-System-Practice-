@@ -159,8 +159,11 @@ def teacher_dashboard():
     if current_user.role != 'teacher':
         abort(403)
     courses = Course.query.filter_by(teacher_id=current_user.id).all()
+    # 按未结束(0) > 已结束(1)排序
+    def sort_key(course):
+        return 1 if course.is_ended else 0
+    courses = sorted(courses, key=sort_key)
     return render_template('teacher_dashboard.html', courses=courses)
-
 
 # 教师课程管理 - 创建课程
 @app.route('/teacher/course/create', methods=['GET', 'POST'])
@@ -946,14 +949,27 @@ def student_courses():
     if current_user.role != 'student':
         abort(403)
     courses = current_user.enrolled_courses
-    # 构建 results_map
-    results_map = {}
-    exam_results = ExamResult.query.filter_by(user_id=current_user.id).all()
-    for result in exam_results:
-        results_map[(result.exam_id, current_user.id)] = result
-    return render_template('student_courses.html', courses=courses, results_map=results_map)
-
-
+    progress_records = LearningProgress.query.filter_by(user_id=current_user.id).all()
+    progress_map = {r.course_id: r for r in progress_records}
+    course_status = []
+    for c in courses:
+        progress = progress_map.get(c.id)
+        percent = progress.progress_percentage if progress else 0
+        course_status.append({
+            'course': c,
+            'progress_percentage': percent,
+            'is_ended': c.is_ended
+        })
+    # 排序：未完成(0) < 已完成(1) < 已结束(2)
+    def sort_key(item):
+        if item['is_ended']:
+            return 2
+        elif item['progress_percentage'] >= 100:
+            return 1
+        else:
+            return 0
+    course_status = sorted(course_status, key=sort_key)
+    return render_template('student_courses.html', course_status=course_status)
 @app.route('/student/exams')
 @login_required
 def student_exams():
