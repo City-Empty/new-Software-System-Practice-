@@ -609,10 +609,12 @@ def edit_question(exam_id, question_id):
             if question.question_type == 'single':
                 question.correct_answer = request.form.get('correct_answer', 'A')
             else:
-                correct_answer_list = request.form.getlist('correct_answer')
-                question.correct_answer = ','.join(sorted(correct_answer_list))
+                # 多选题：先清空答案，再根据当前选项和表单选项更新
+                correct_answer_list = request.form.getlist('correct_answer_multi')
+                valid_keys = [k for k, v in question.options.items() if v and k in ['A', 'B', 'C', 'D']]
+                filtered = [k for k in correct_answer_list if k in valid_keys]
+                question.correct_answer = ','.join(sorted(filtered))
         elif question.question_type == 'judge':
-            # 判断题固定选项
             question.options = {'A': '正确', 'B': '错误'}
             question.correct_answer = request.form.get('correct_answer', 'A')
         elif question.question_type == 'blank':

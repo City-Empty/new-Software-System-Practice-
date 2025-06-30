@@ -54,10 +54,10 @@
     <div id="multiple-answer" class="form-group" style="display:none;">
         <label for="correct_answer">正确答案（可多选）</label>
         <div>
-            <label><input type="checkbox" name="correct_answer" value="A" {% if 'A' in question.correct_answer %}checked{% endif %}> A</label>
-            <label><input type="checkbox" name="correct_answer" value="B" {% if 'B' in question.correct_answer %}checked{% endif %}> B</label>
-            <label><input type="checkbox" name="correct_answer" value="C" {% if 'C' in question.correct_answer %}checked{% endif %}> C</label>
-            <label><input type="checkbox" name="correct_answer" value="D" {% if 'D' in question.correct_answer %}checked{% endif %}> D</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="A" {% if 'A' in question.correct_answer %}checked{% endif %}> A</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="B" {% if 'B' in question.correct_answer %}checked{% endif %}> B</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="C" {% if 'C' in question.correct_answer %}checked{% endif %}> C</label>
+            <label><input type="checkbox" name="correct_answer_multi" value="D" {% if 'D' in question.correct_answer %}checked{% endif %}> D</label>
         </div>
     </div>
     <!-- 判断题 -->
