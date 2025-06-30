@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>错误 {{ code }}</title>
+    <style>
+        body {
+            background: #f7f7f7;
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .error-container {
+            max-width: 480px;
+            margin: 100px auto 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .error-code {
+            font-size: 72px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        .back-link {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #3498db;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        .back-link:hover {
+            background: #217dbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">{{ code }}</div>
+        <div class="error-message">{{ message }}</div>
+        <a href="{{ url_for('index') }}" class="back-link">返回首页</a>
+    </div>
+</body>
+</html>
+

@@ -1,43 +1,60 @@
 {% extends "base.html" %}
 {% block title %}主观题批改 - {{ exam.title }}{% endblock %}
 {% block content %}
-<h2>{{ exam.title }} - 主观题批改</h2>
+<h2 class="mb-4">{{ exam.title }} - 主观题批改</h2>
 <form method="post">
-    <table class="table-auto w-full border mb-6">
-        <thead>
+    <div class="table-responsive">
+    <table class="table table-bordered align-middle bg-white shadow-sm">
+        <thead class="table-light">
             <tr>
-                <th class="border px-2 py-1">学生</th>
+                <th>学生</th>
                 {% for q in questions %}
-                <th class="border px-2 py-1">题目{{ loop.index }}</th>
+                <th>
+                    <div>题目{{ loop.index }}</div>
+                    <div class="small text-muted" style="max-width:220px;word-break:break-all;">{{ q.question_text|truncate(40) }}</div>
+                    <hr class="my-1">
+                    <span class="badge bg-info text-dark">满分: {{ q.score }}</span>
+                </th>
                 {% endfor %}
-                <th class="border px-2 py-1">主观题总分</th>
+                <th>主观题总分</th>
             </tr>
         </thead>
         <tbody>
             {% for result in results %}
             <tr>
-                <td class="border px-2 py-1">{{ result.user.username }}</td>
-                {% set subjective_total = 0 %}
+                <td>
+                    <span class="fw-bold">{{ result.user.username }}</span>
+                </td>
                 {% for q in questions %}
                     {% set ans = result.parsed_answers.get(q.id|string, '') %}
-                    <td class="border px-2 py-1">
-                        <div><b>作答：</b>{{ ans }}</div>
+                    <td>
+                        <div class="mb-2"><b>作答：</b><span class="text-primary">{{ ans|default('未作答') }}</span></div>
                         <div>
-                            <label>得分：</label>
-                            <input type="number" name="score_{{ q.id }}_{{ result.id }}" min="0" max="{{ q.score }}" step="0.1"
-                                value="{{ request.form.get('score_' ~ q.id ~ '_' ~ result.id, '') or '' }}" style="width:60px;">
-                            / {{ q.score }}
+                            <label class="me-1">得分：</label>
+                            <input type="number"
+                                   name="score_{{ q.id }}_{{ result.id }}"
+                                   min="0" max="{{ q.score }}" step="0.1"
+                                   value="{% if result.subjective_scores and result.subjective_scores[q.id|string] is not none %}{{ result.subjective_scores[q.id|string] }}{% else %}{{ request.form.get('score_' ~ q.id ~ '_' ~ result.id, '') or '' }}{% endif %}"
+                                   class="form-control d-inline-block"
+                                   style="width:80px; font-weight:bold; color:#1a8917; background:#eafbe7;">
+                            <span class="ms-1 text-secondary">/ {{ q.score }}</span>
+                            {% if result.subjective_scores and result.subjective_scores[q.id|string] is not none %}
+                                <span class="badge bg-secondary ms-2">已评分: {{ result.subjective_scores[q.id|string] }}</span>
+                            {% endif %}
                         </div>
                     </td>
                 {% endfor %}
-                <td class="border px-2 py-1">
-                    {{ result.subjective_score or 0 }}
+                <td>
+                    <span class="badge bg-success fs-6">{{ result.subjective_score or 0 }}</span>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <button type="submit" class="btn btn-primary">保存批改结果</button>
-    <a href="{{ url_for('teacher_all_exams') }}" class="btn btn-secondary ml-2">返回</a>
+    </div>
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary px-4">保存批改结果</button>
+        <a href="{{ url_for('teacher_all_exams') }}" class="btn btn-secondary ms-2">返回</a>
+    </div>
 </form>
 {% endblock %}
