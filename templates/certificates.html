@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}我的证书{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">我的证书</h2>
+  {% if role == 'student' %}
+    <div class="mb-3">
+      <h5>已完成课程数：{{ completed_courses|length }}</h5>
+      {% if completed_courses %}
+        <div class="mb-2">
+          <strong>已完成课程：</strong>
+          <div>
+            {% set max_courses = 20 %}
+            {% for course in completed_courses[:max_courses] %}
+              {% if loop.index0 % 4 == 0 %}
+                <div class="row">
+              {% endif %}
+              <div class="col-md-3 col-6 text-truncate mb-1">
+                <span class="badge bg-secondary">{{ course.title }}</span>
+              </div>
+              {% if loop.index0 % 4 == 3 or loop.last or loop.index == max_courses %}
+                </div>
+              {% endif %}
+            {% endfor %}
+            {% if completed_courses|length > max_courses %}
+              <div class="text-muted">……</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    {% if certificates %}
+      <div class="row mb-3">
+        {% for cert in certificates %}
+          <div class="col-md-6 col-6 mb-3 text-center">
+            <img src="{{ url_for('static', filename='certificates/student_' ~ cert.level ~ '.png') }}"
+                 alt="{{ cert.name }}"
+                 class="img-fluid mb-2"
+                 style="max-height:200px; width:auto;">
+            <div><span class="badge bg-success">{{ cert.name }}</span></div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">暂无证书，完成更多课程可获得证书！</div>
+    {% endif %}
+  {% elif role == 'teacher' %}
+    <div class="mb-3">
+      <h5>已结束授课数：{{ ended_count }}</h5>
+      {% if ended_courses %}
+        <div class="mb-2">
+          <strong>已结束课程：</strong>
+          <div>
+            {% set max_courses = 20 %}
+            {% for course in ended_courses[:max_courses] %}
+              {% if loop.index0 % 4 == 0 %}
+                <div class="row">
+              {% endif %}
+              <div class="col-md-3 col-6 text-truncate mb-1">
+                <span class="badge bg-secondary">{{ course.title }}</span>
+              </div>
+              {% if loop.index0 % 4 == 3 or loop.last or loop.index == max_courses %}
+                </div>
+              {% endif %}
+            {% endfor %}
+            {% if ended_courses|length > max_courses %}
+              <div class="text-muted">……</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    {% if certificates %}
+      <div class="row mb-3">
+        {% for cert in certificates %}
+          <div class="col-md-6 col-6 mb-3 text-center">
+            <img src="{{ url_for('static', filename='certificates/teacher_' ~ cert.level ~ '.png') }}"
+                 alt="{{ cert.name }}"
+                 class="img-fluid mb-2"
+                 style="max-height:200px; width:auto;">
+            <div><span class="badge bg-primary">{{ cert.name }}</span></div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">暂无证书，结束更多课程可获得证书！</div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1309,35 +1309,56 @@ def rejudge_exam_results(exam_id):
         db.session.commit()
 
 # 学生证书页面
-@app.route('/student/certificates')
+@app.route('/certificates')
 @login_required
-def student_certificates():
-    if current_user.role != 'student':
+def certificates():
+    if current_user.role == 'student':
+        # 学生证书逻辑
+        courses = current_user.enrolled_courses
+        progress_records = LearningProgress.query.filter_by(user_id=current_user.id).all()
+        progress_map = {r.course_id: r for r in progress_records}
+        completed_courses = [
+            c for c in courses
+            if progress_map.get(c.id)
+               and (progress_map[c.id].progress_percentage or 0) >= 100
+               and c.is_ended
+        ]
+        completed_count = len(completed_courses)
+        certificate_thresholds = [5, 10, 15, 20]
+        certificates = []
+        for threshold in certificate_thresholds:
+            if completed_count >= threshold:
+                certificates.append({
+                    'level': threshold,
+                    'name': f'完成{threshold}门课程证书'
+                })
+        return render_template(
+            'certificates.html',
+            role='student',
+            certificates=certificates,
+            completed_courses=completed_courses
+        )
+    elif current_user.role == 'teacher':
+        courses = Course.query.filter_by(teacher_id=current_user.id).all()
+        ended_courses = [c for c in courses if c.is_ended]
+        ended_count = len(ended_courses)
+        certificate_thresholds = [3, 6, 9, 12]
+        certificates = []
+        for threshold in certificate_thresholds:
+            if ended_count >= threshold:
+                certificates.append({
+                    'level': threshold,
+                    'name': f'授课{threshold}门课程证书'
+                })
+        return render_template(
+            'certificates.html',
+            role='teacher',
+            certificates=certificates,
+            ended_count=ended_count,
+            ended_courses=ended_courses  # 新增
+        )
+    else:
         abort(403)
-    # 这里根据你的业务逻辑获取已完成课程和证书
-    courses = current_user.enrolled_courses
-    progress_records = LearningProgress.query.filter_by(user_id=current_user.id).all()
-    progress_map = {r.course_id: r for r in progress_records}
-    completed_courses = [
-        c for c in courses
-        if progress_map.get(c.id)
-           and (progress_map[c.id].progress_percentage or 0) >= 100
-           and c.is_ended
-    ]
-    completed_count = len(completed_courses)
-    certificate_thresholds = [5, 10, 15, 20]
-    certificates = []
-    for threshold in certificate_thresholds:
-        if completed_count >= threshold:
-            certificates.append({
-                'level': threshold,
-                'name': f'完成{threshold}门课程证书'
-            })
-    return render_template(
-        'student_certificates.html',
-        completed_courses=completed_courses,
-        certificates=certificates
-    )
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

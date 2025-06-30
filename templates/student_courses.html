@@ -16,12 +16,17 @@
       <div class="card-body">
         <h5 class="card-title">
           {{ item.course.title }}
-          {% if item.is_ended %}
-            <span class="badge bg-danger ms-2">已结束</span>
-          {% elif item.progress_percentage >= 100 %}
+          {% if not item.is_ended and item.progress_percentage >= 100 %}
             <span class="badge bg-success ms-2">已完成</span>
           {% endif %}
         </h5>
+        <div class="mb-2">
+          {% if item.is_ended %}
+            <span class="badge bg-danger">已结束</span>
+          {% elif item.progress_percentage < 100 %}
+            <span class="badge bg-primary">进行中</span>
+          {% endif %}
+        </div>
         <p class="card-text text-truncate">{{ item.course.description }}</p>
       </div>
       <div class="card-footer bg-white border-0">
