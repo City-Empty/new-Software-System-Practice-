@@ -58,9 +58,21 @@ def student_course_active_required(f):
 
 
 # 首页
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    courses = Course.query.all()
+    title = request.args.get('title', '').strip()
+    teacher = request.args.get('teacher', '').strip()
+    is_ended = request.args.get('is_ended')
+
+    query = Course.query
+    if title:
+        query = query.filter(Course.title.contains(title))
+    if teacher:
+        query = query.join(User).filter(User.username.contains(teacher))
+    if is_ended in ['0', '1']:
+        query = query.filter(Course.is_ended == (is_ended == '1'))
+
+    courses = query.all()
     return render_template('index.html', courses=courses)
 
 # 封面图片访问
