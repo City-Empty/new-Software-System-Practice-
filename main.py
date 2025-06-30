@@ -1217,15 +1217,15 @@ def api_update_progress():
     ).all()
     finished_exam_ids = {result.exam_id for result in exam_results}
 
-    # 平均分配每个考试的进度
     exam_count = len(exams)
-    exam_completion_score = 0
-    for exam in exams:
-        exam_completion_score += 1 if exam.id in finished_exam_ids else 0
-    exam_percent = (exam_completion_score / exam_count) * 100 if exam_count else 0
+    exam_completion_score = sum(1 for exam in exams if exam.id in finished_exam_ids)
+    if exam_count == 0:
+        exam_percent = 100
+        progress.exam_completed = True
+    else:
+        exam_percent = (exam_completion_score / exam_count) * 100
+        progress.exam_completed = (exam_completion_score == exam_count)
 
-    # 所有考试完成才标记为已完成
-    progress.exam_completed = (exam_completion_score == exam_count and exam_count > 0)
     progress.progress_percentage = (progress.video_watched_percentage * 0.5) + (exam_percent * 0.5)
     progress.updated_at = datetime.datetime.utcnow()
     db.session.commit()
@@ -1240,6 +1240,39 @@ def debug_progress(user_id, course_id):
     else:
         return "没有找到学习进度记录"
 
+
+# 我的证书
+# 学生证书页面，支持多级证书
+@app.route('/student/certificates')
+@login_required
+def student_certificates():
+    if current_user.role != 'student':
+        abort(403)
+    # 获取所有已结束课程
+    ended_courses = Course.query.filter_by(is_ended=True).all()
+    # 获取当前用户所有进度记录
+    progress_records = LearningProgress.query.filter_by(user_id=current_user.id).all()
+    progress_map = {r.course_id: r for r in progress_records}
+    # 统计已完成课程
+    completed_courses = [
+        c for c in ended_courses
+        if progress_map.get(c.id) and (progress_map[c.id].progress_percentage or 0) >= 100
+    ]
+    completed_count = len(completed_courses)
+    # 证书门槛
+    certificate_thresholds = [5, 10, 15, 20]
+    certificates = []
+    for threshold in certificate_thresholds:
+        if completed_count >= threshold:
+            certificates.append({
+                'level': threshold,
+                'name': f'完成{threshold}门课程证书'
+            })
+    return render_template(
+        'student_certificates.html',
+        completed_courses=completed_courses,
+        certificates=certificates
+    )
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

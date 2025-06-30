@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.certificate-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+.certificate-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 24px 20px 16px 20px;
+  text-align: center;
+  width: 320px;
+  transition: box-shadow 0.2s;
+}
+.certificate-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+}
+.certificate-card img {
+  max-width: 220px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+.certificate-card h3 {
+  margin: 12px 0 8px 0;
+  color: #2d7be5;
+}
+.certificate-card p {
+  color: #333;
+  font-size: 15px;
+}
+/* 最多4列5行，超出显示省略号 */
+.course-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 16px;
+  max-width: 600px;
+  margin: 0 auto 24px auto;
+  max-height: calc(1.6em * 5); /* 5行高度 */
+  overflow: hidden;
+  position: relative;
+  list-style: disc inside;
+  padding-right: 2em;
+}
+.course-list li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1em;
+  line-height: 1.6em;
+}
+.course-list::after {
+  content: '...';
+  position: absolute;
+  right: 0.5em;
+  bottom: 0.2em;
+  background: #fff;
+  color: #888;
+  font-size: 1.2em;
+  line-height: 1.6em;
+  pointer-events: none;
+  display: none;
+}
+.course-list.full::after {
+  display: block;
+}
+</style>
+
+<h2 style="text-align:center;margin-bottom:24px;">我的证书</h2>
+<p style="text-align:center;">已完成课程数：<b>{{ completed_courses|length }}</b></p>
+<ul class="course-list{% if completed_courses|length > 20 %} full{% endif %}">
+  {% for course in completed_courses %}
+    <li>{{ course.title }}</li>
+  {% endfor %}
+</ul>
+
+<div class="certificate-list">
+  {% for cert in certificates %}
+    <div class="certificate-card">
+      <img src="{{ url_for('static', filename='certificates/cert_' ~ cert.level ~ '.png') }}" alt="{{ cert.name }}">
+      <h3>{{ cert.name }}</h3>
+      <p>恭喜你已获得此证书！</p>
+    </div>
+  {% endfor %}
+</div>
+<p style="text-align:center;color:#888;">完成 5、10、15、20 门课程即可获得相应证书。</p>
+{% endblock %}

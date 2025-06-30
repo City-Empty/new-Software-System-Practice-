@@ -25,6 +25,9 @@
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'course_forum' %}active{% endif %}" href="{{ url_for('course_forum') }}">论坛</a>
           </li>
+       <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'student_certificates' %}active{% endif %}" href="{{ url_for('student_certificates') }}">我的证书</a>
+       </li>
           {% if current_user.role == 'teacher' %}
             <li class="nav-item">
               <a class="nav-link {% if request.endpoint.startswith('teacher_') %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">教师中心</a>
