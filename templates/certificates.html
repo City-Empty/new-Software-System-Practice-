@@ -1,5 +1,16 @@
 {% extends 'base.html' %}
 {% block title %}我的证书{% endblock %}
+
+
+{% block head %}
+<style>
+  body {
+    background: url("{{ url_for('static', filename='images/certificates.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
   <h2 class="mb-4">我的证书</h2>
