@@ -2,6 +2,17 @@
 
 {% block title %}注册 - EduHub{% endblock %}
 
+
+
+{% block head %}
+<style>
+  body {
+    background: url("{{ url_for('static', filename='images/login_bg.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <h2>用户注册</h2>
 <p>创建你的EduHub账号</p>

@@ -1,13 +1,19 @@
 {% extends "base.html" %}
 
 {% block title %}首页 - EduHub{% endblock %}
+
 {% block head %}
 <style>
+  body {
+    background: url('{{ url_for('static', filename='images/welcome.jpg') }}') no-repeat center center fixed;
+    background-size: cover;
+  }
   .welcome-img {
     max-width: 70vw;
     height: auto;
     margin: 40px auto 0 auto;
     display: block;
+    background: transparent;
   }
   .course-cover {
     width: 100%;
@@ -16,18 +22,19 @@
     border-radius: 8px 8px 0 0;
     background: #f3f4f6;
   }
- .card {
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
-}
-.card-body {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-}
+  .card {
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
 </style>
 {% endblock %}
+
 {% block content %}
   {% if current_user.is_authenticated %}
     <form method="get" action="{{ url_for('index') }}" class="mb-4">

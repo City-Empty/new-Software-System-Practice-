@@ -1,5 +1,16 @@
 {% extends "base.html" %}
 {% block title %}课程论坛{% endblock %}
+
+
+{% block head %}
+<style>
+  body {
+    background: url("{{ url_for('static', filename='images/forum.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="forum-container">
     <h2>课程论坛</h2>
